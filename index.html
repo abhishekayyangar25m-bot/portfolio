@@ -282,6 +282,19 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
   background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:28px;
 }
 
+
+.pdf-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 20px;border-radius:8px;font-size:0.84rem;font-weight:500;
+  text-decoration:none;transition:all .2s;margin-top:16px;
+  border:1px solid rgba(201,168,76,0.4);
+  color:var(--gold);background:rgba(201,168,76,0.08);
+}
+.pdf-btn:hover{background:rgba(201,168,76,0.18);border-color:var(--gold);transform:translateY(-1px)}
+.pdf-btn i{font-size:1rem}
+.pdf-btn.teal-btn{color:var(--teal);border-color:rgba(46,196,182,0.4);background:rgba(46,196,182,0.08)}
+.pdf-btn.teal-btn:hover{background:rgba(46,196,182,0.18);border-color:var(--teal)}
+
 /* ─── MOBILE ─── */
 @media(max-width:900px){
   .hero{grid-template-columns:1fr}
@@ -381,6 +394,10 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
         </div>
       </div>
 
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px">
+        <a class="pdf-btn" href="https://abhishekayyangar25m-bot.github.io/portfolio/FDI_FPI_Project.pdf" target="_blank"><i class="fa fa-file-pdf"></i> B.Com Project — FDI &amp; FPI Study (96%)</a>
+        <a class="pdf-btn teal-btn" href="https://abhishekayyangar25m-bot.github.io/portfolio/Cashless_Economy_Research_Paper.pdf" target="_blank"><i class="fa fa-file-pdf"></i> Research Paper — Cashless Economy</a>
+      </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:32px;margin-top:8px">
         <p style="font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:20px;font-family:var(--mono)">Core Competencies</p>
         <div class="tag-cloud">
@@ -422,6 +439,7 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
           <div class="edu-deg">B.Com — Accounting &amp; Finance (Honours)</div>
           <div class="edu-inst">SIES College of Arts, Science &amp; Commerce</div>
           <div class="edu-year" style="margin-top:8px">2024</div>
+          <a class="pdf-btn" href="https://abhishekayyangar25m-bot.github.io/portfolio/FDI_FPI_Project.pdf" target="_blank" style="margin-top:12px;font-size:0.78rem;padding:7px 14px"><i class="fa fa-file-pdf"></i> View Project — FDI &amp; FPI Study</a>
         </div>
         <div class="score-box">
           <span class="score-num">7.97</span>
@@ -549,7 +567,10 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       <div class="research-card">
         <div class="edu-badge badge-gold" style="margin-bottom:16px"><i class="fa fa-file-alt"></i> Published Research</div>
         <div class="research-title-text">Cashless Economy — A Move Towards Digital India</div>
-        <div class="research-meta">Primary Research · Survey-based · 2023</div>
+        <div class="research-meta">Primary Research · Survey-based · Published in AVINYA 2023 — SIES College Multidisciplinary National Journal</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a class="pdf-btn teal-btn" href="https://abhishekayyangar25m-bot.github.io/portfolio/Cashless_Economy_Research_Paper.pdf" target="_blank"><i class="fa fa-file-pdf"></i> Download Research Paper (PDF)</a>
+        </div>
         <p style="font-size:0.92rem;color:var(--text2);line-height:1.8;margin-bottom:20px">
           An empirical study examining the trajectory of digital payment adoption in India, evaluating the effectiveness of government initiatives and identifying structural barriers to a fully cashless economy.
         </p>
