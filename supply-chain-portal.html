@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Anton Pharma — Supply Chain Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:#f7f5f0;color:#1c1917;min-height:100vh;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+input,select,textarea{font-family:'DM Sans',sans-serif;font-size:13px;color:#1c1917;background:#fff;border:1.5px solid #e2ddd6;border-radius:7px;padding:8px 11px;width:100%;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus,select:focus,textarea:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12)}
+input.err,select.err{border-color:#fb7185;box-shadow:0 0 0 3px rgba(251,113,133,.12)}
+select option{background:#fff}
+textarea{resize:vertical;min-height:68px}
+button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none;font-size:13px;font-weight:500;border-radius:7px;transition:all .15s}
+button:active{transform:scale(.98)}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#f7f5f0}
+::-webkit-scrollbar-thumb{background:#c8c3b8;border-radius:3px}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.fade-in{animation:fadeIn .22s ease both}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo,useCallback}=React;
+
+/* ── CONSTANTS ───────────────────────────────────────────────────────────── */
+// Strict sequential status flow — no skipping allowed
+const STATUS_FLOW=['Under Production','Ready at Manufacturer','Inward Transit','Under ADC Clearance','Pending Handover','Outward Transit','ADC Clearance Done','At Warehouse','Pending Shipment','Dispatch at Port','Cleared & Accepted'];
+const STATUS_LIST=[...STATUS_FLOW];
+const FREIGHT=['CIF AIR','CIF SEA','FOB AIR','FOB SEA','FCA AIR','CIP AIR','EX Factory','To Pay Basis'];
+const PAY_TERMS=['Advance','30 Days','60 Days','90 Days','LC at Sight','LC 30 Days'];
+const PAY_STATUS=['Received','Not Received','Partial'];
+const UNITS=['Kg','Ton','Ltr','Box','Pcs','Vial','Strip'];
+const ANTON_TERMS=['Advance','30 Days','45 Days','60 Days','Against Delivery','LC at Sight'];
+// Map payment term to days for due-date calculation
+const PAY_TERM_DAYS={'Advance':0,'30 Days':30,'60 Days':60,'90 Days':90,'LC at Sight':0,'LC 30 Days':30};
+
+const STATUS_META={
+  'Under Production':{dot:'#eab308',bg:'#fefce8',tx:'#713f12'},
+  'Ready at Manufacturer':{dot:'#22c55e',bg:'#f0fdf4',tx:'#14532d'},
+  'Inward Transit':{dot:'#3b82f6',bg:'#eff6ff',tx:'#1e40af'},
+  'Under ADC Clearance':{dot:'#a855f7',bg:'#fdf4ff',tx:'#6b21a8'},
+  'Pending Handover':{dot:'#f97316',bg:'#fff7ed',tx:'#7c2d12'},
+  'Outward Transit':{dot:'#60a5fa',bg:'#eff6ff',tx:'#1e3a8a'},
+  'Cleared & Accepted':{dot:'#16a34a',bg:'#f0fdf4',tx:'#14532d'},
+  'At Warehouse':{dot:'#14b8a6',bg:'#f0fdfa',tx:'#134e4a'},
+  'Pending Shipment':{dot:'#fb923c',bg:'#fff7ed',tx:'#9a3412'},
+  'ADC Clearance Done':{dot:'#8b5cf6',bg:'#f5f3ff',tx:'#4c1d95'},
+  'Dispatch at Port':{dot:'#06b6d4',bg:'#ecfeff',tx:'#164e63'},
+};
+
+/* ── HELPERS ─────────────────────────────────────────────────────────────── */
+const uid=()=>'ORD-'+Math.random().toString(36).slice(2,6).toUpperCase();
+const ptyId=()=>'PTY-'+Math.random().toString(36).slice(2,5).toUpperCase();
+const prdId=()=>'PRD-'+Math.random().toString(36).slice(2,5).toUpperCase();
+const today=()=>new Date().toISOString().split('T')[0];
+const nowStr=()=>new Date().toLocaleString('en-IN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+const fmt=(d)=>d?new Date(d+'T00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';
+const money=(v,s='$')=>v!=null&&v!==''?`${s}${Number(v).toLocaleString('en-IN')}`:'—';
+const daysLeft=(d)=>{if(!d)return null;return Math.ceil((new Date(d)-new Date())/86400000);};
+const addDays=(dateStr,days)=>{if(!dateStr||!days)return '';const d=new Date(dateStr+'T00:00');d.setDate(d.getDate()+days);return d.toISOString().split('T')[0];};
+
+// Compute payment due date from AWB date + payment terms
+const computePayDue=(awbDate,paymentTerms)=>{
+  const days=PAY_TERM_DAYS[paymentTerms];
+  if(days===undefined||!awbDate)return '';
+  return addDays(awbDate,days);
+};
+
+// Get allowed next statuses (only ±1 step from current, strictly sequential)
+const getAllowedStatuses=(currentStatus)=>{
+  const idx=STATUS_FLOW.indexOf(currentStatus);
+  if(idx===-1)return STATUS_LIST;
+  const allowed=[];
+  if(idx>0)allowed.push(STATUS_FLOW[idx-1]);
+  allowed.push(STATUS_FLOW[idx]);
+  if(idx<STATUS_FLOW.length-1)allowed.push(STATUS_FLOW[idx+1]);
+  return allowed;
+};
+
+/* ── SEED DATA ───────────────────────────────────────────────────────────── */
+const SEED_PARTIES=[
+  {id:'PTY001',name:'Helix Pharma GmbH',country:'Germany',paymentTerms:'60 Days',salesPerson:'Rohan Shah',email:'contact@helixpharma.de',contactPerson:'Hans Müller',contactNumber:'+49-89-1234567'},
+  {id:'PTY002',name:'MedTech Exports Ltd',country:'United Kingdom',paymentTerms:'30 Days',salesPerson:'Priya Nair',email:'ops@medtech.co.uk',contactPerson:'James Parker',contactNumber:'+44-20-9876543'},
+  {id:'PTY003',name:'BioSync Pharma Inc',country:'USA',paymentTerms:'LC at Sight',salesPerson:'Amir Khan',email:'imports@biosync.com',contactPerson:'Sarah Lee',contactNumber:'+1-212-5559876'},
+  {id:'PTY004',name:'Pharma Gulf LLC',country:'UAE',paymentTerms:'Advance',salesPerson:'Rohan Shah',email:'gulf@pharmagulf.ae',contactPerson:'Khalid Al Rashid',contactNumber:'+971-4-3334455'},
+];
+const SEED_PRODUCTS=[
+  {id:'PRD001',manufacturer:'Cipla Ltd',productName:'Amoxicillin 500mg',standardQty:1000,purchaseRate:180,hsCode:'30041090',batchNumber:'',expiryDate:''},
+  {id:'PRD002',manufacturer:'Sun Pharma',productName:'Metformin 850mg',standardQty:500,purchaseRate:220,hsCode:'30049099',batchNumber:'',expiryDate:''},
+  {id:'PRD003',manufacturer:"Dr. Reddy's Labs",productName:'Atorvastatin 10mg',standardQty:2000,purchaseRate:95,hsCode:'30049041',batchNumber:'',expiryDate:''},
+  {id:'PRD004',manufacturer:'Lupin Ltd',productName:'Azithromycin 250mg',standardQty:800,purchaseRate:310,hsCode:'30041030',batchNumber:'',expiryDate:''},
+];
+const SEED_ORDERS=[
+  {id:'ORD-001',status:'Inward Transit',archived:false,remarks:'ETA Mumbai port in 3 days',partyPONumber:'HPG-2024-089',partyPODate:'2024-11-01',freightType:'CIF SEA',partyId:'PTY001',invoiceNumber:'INV-2024-045',country:'Germany',paymentTerms:'60 Days',productId:'PRD001',batchLotNumber:'BL-CIP-2024-11',expiryDate:'2027-06-30',quantity:500,unit:'Kg',totalValueUSD:12500,antonPONumber:'APO-1189',antonReleaseDate:'2024-10-28',manufacturer:'Cipla Ltd',totalValueINR:1043750,antonPaymentTerms:'30 Days',expectedDelivery:'2024-12-10',actualDelivery:'',paymentRemarks:'NET 60 from BL date',paymentStatus:'Not Received',paymentDate:'',postShipmentDocs:'BL issued',awbDate:'2024-11-05',awbNumber:'MAEU-1234567890',adcCertNumber:'',usdRate:83.5,usdRateUpdatedAt:'2024-11-01',createdBy:'Rohan Shah',createdAt:'2024-10-20',updatedAt:'2024-11-05',logs:[{user:'Rohan Shah',action:'Order created',at:'2024-10-20 09:12'},{user:'Rohan Shah',action:'Status → Inward Transit',at:'2024-11-05 14:30'}]},
+  {id:'ORD-002',status:'At Warehouse',archived:false,remarks:'QC cleared',partyPONumber:'MTE-892',partyPODate:'2024-10-15',freightType:'FOB AIR',partyId:'PTY002',invoiceNumber:'INV-2024-041',country:'United Kingdom',paymentTerms:'30 Days',productId:'PRD002',batchLotNumber:'BL-SUN-2024-09',expiryDate:'2026-12-31',quantity:200,unit:'Kg',totalValueUSD:8200,antonPONumber:'APO-1175',antonReleaseDate:'2024-10-10',manufacturer:'Sun Pharma',totalValueINR:684700,antonPaymentTerms:'Advance',expectedDelivery:'2024-11-20',actualDelivery:'2024-11-18',paymentRemarks:'Partial received',paymentStatus:'Partial',paymentDate:'2024-11-15',postShipmentDocs:'All docs submitted',awbDate:'2024-10-20',awbNumber:'176-12345678',adcCertNumber:'',usdRate:83.5,usdRateUpdatedAt:'2024-10-15',createdBy:'Priya Nair',createdAt:'2024-10-08',updatedAt:'2024-11-18',logs:[{user:'Priya Nair',action:'Order created',at:'2024-10-08 11:00'},{user:'Amir Khan',action:'Status → At Warehouse',at:'2024-11-18 16:45'}]},
+  {id:'ORD-003',status:'Pending Shipment',archived:false,remarks:'Awaiting freight booking',partyPONumber:'BSP-2024-33',partyPODate:'2024-11-10',freightType:'CIF AIR',partyId:'PTY003',invoiceNumber:'INV-2024-052',country:'USA',paymentTerms:'LC at Sight',productId:'PRD003',batchLotNumber:'',expiryDate:'',quantity:1000,unit:'Kg',totalValueUSD:19800,antonPONumber:'APO-1202',antonReleaseDate:'2024-11-08',manufacturer:"Dr. Reddy's Labs",totalValueINR:1653300,antonPaymentTerms:'60 Days',expectedDelivery:'2024-12-20',actualDelivery:'',paymentRemarks:'LC confirmed',paymentStatus:'Not Received',paymentDate:'',postShipmentDocs:'',awbDate:'',awbNumber:'',adcCertNumber:'',usdRate:83.5,usdRateUpdatedAt:'2024-11-08',createdBy:'Amir Khan',createdAt:'2024-11-08',updatedAt:'2024-11-10',logs:[{user:'Amir Khan',action:'Order created',at:'2024-11-08 10:22'}]},
+  {id:'ORD-004',status:'Cleared & Accepted',archived:false,remarks:'Successfully delivered',partyPONumber:'PGL-024-18',partyPODate:'2024-09-05',freightType:'EX Factory',partyId:'PTY004',invoiceNumber:'INV-2024-029',country:'UAE',paymentTerms:'Advance',productId:'PRD004',batchLotNumber:'BL-LUP-2024-08',expiryDate:'2026-09-30',quantity:300,unit:'Kg',totalValueUSD:7200,antonPONumber:'APO-1140',antonReleaseDate:'2024-09-02',manufacturer:'Lupin Ltd',totalValueINR:601200,antonPaymentTerms:'Advance',expectedDelivery:'2024-10-15',actualDelivery:'2024-10-12',paymentRemarks:'Full payment received',paymentStatus:'Received',paymentDate:'2024-09-10',postShipmentDocs:'Complete',awbDate:'2024-09-22',awbNumber:'TK-2024-88821',adcCertNumber:'ADC-2024-MUM-04812',usdRate:83.5,usdRateUpdatedAt:'2024-09-05',createdBy:'Rohan Shah',createdAt:'2024-09-02',updatedAt:'2024-10-12',logs:[{user:'Rohan Shah',action:'Order created',at:'2024-09-02 09:00'},{user:'Priya Nair',action:'Status → Cleared & Accepted',at:'2024-10-12 13:20'}]},
+];
+const DEMO_USERS=[
+  {id:'u1',name:'Rohan Shah',role:'Admin',email:'rohan@antonpharma.in',pass:'admin123'},
+  {id:'u2',name:'Priya Nair',role:'Sales',email:'priya@antonpharma.in',pass:'sales123'},
+  {id:'u3',name:'Amir Khan',role:'Logistics',email:'amir@antonpharma.in',pass:'log123'},
+  {id:'u4',name:'Sneha Patel',role:'Finance',email:'sneha@antonpharma.in',pass:'fin123'},
+];
+
+/* ── SMALL COMPONENTS ────────────────────────────────────────────────────── */
+function StatusBadge({status}){
+  const m=STATUS_META[status]||{dot:'#999',bg:'#f5f5f5',tx:'#444'};
+  return(
+    <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 9px',borderRadius:20,fontSize:11,fontWeight:500,background:m.bg,color:m.tx,whiteSpace:'nowrap'}}>
+      <span style={{width:6,height:6,borderRadius:'50%',background:m.dot,flexShrink:0,display:'inline-block'}}/>
+      {status}
+    </span>
+  );
+}
+function Pill({label,color='gray',dot}){
+  const p={gray:{bg:'#f0ede6',tx:'#57524d'},green:{bg:'#dcfce7',tx:'#14532d'},blue:{bg:'#dbeafe',tx:'#1e40af'},amber:{bg:'#fef3c7',tx:'#92400e'},red:{bg:'#ffe4e6',tx:'#9f1239'},violet:{bg:'#ede9fe',tx:'#5b21b6'},orange:{bg:'#fff7ed',tx:'#9a3412'}}[color]||{bg:'#f0ede6',tx:'#57524d'};
+  return<span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 8px',borderRadius:20,fontSize:11,fontWeight:500,background:p.bg,color:p.tx,whiteSpace:'nowrap'}}>{dot&&<span style={{width:5,height:5,borderRadius:'50%',background:p.tx,opacity:.7}}/>}{label}</span>;
+}
+function Avatar({name,size=30}){
+  const cols=[['#dbeafe','#1d4ed8'],['#dcfce7','#15803d'],['#fef3c7','#92400e'],['#ede9fe','#6d28d9'],['#ffe4e6','#be123c'],['#ccfbf1','#0f766e']];
+  const [bg,fg]=cols[name.charCodeAt(0)%6];
+  return<div style={{width:size,height:size,borderRadius:'50%',background:bg,color:fg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:size*.36,fontWeight:600,flexShrink:0,userSelect:'none'}}>{name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>;
+}
+function Spinner(){return<div style={{width:16,height:16,border:'2px solid #e2ddd6',borderTopColor:'#3b82f6',borderRadius:'50%',animation:'spin .7s linear infinite',display:'inline-block'}}/>;}
+function Label({text,req,hint}){
+  return(
+    <div style={{marginBottom:4}}>
+      <label style={{fontSize:11,fontWeight:600,color:'#6b6560',letterSpacing:.5,textTransform:'uppercase'}}>{text}{req&&<span style={{color:'#fb7185',marginLeft:2}}>*</span>}</label>
+      {hint&&<span style={{fontSize:10,color:'#a9a49e',marginLeft:6}}>{hint}</span>}
+    </div>
+  );
+}
+function ErrMsg({msg}){return msg?<span style={{fontSize:11,color:'#dc2626',marginTop:3,display:'block'}}>⚠ {msg}</span>:null;}
+function InfoBox({children,color='blue'}){
+  const c={blue:{bg:'#eff6ff',border:'#bfdbfe',tx:'#1e40af'},amber:{bg:'#fffbeb',border:'#fde68a',tx:'#92400e'},red:{bg:'#fff1f2',border:'#fecaca',tx:'#9f1239'},green:{bg:'#f0fdf4',border:'#bbf7d0',tx:'#15803d'}}[color];
+  return<div style={{fontSize:12,background:c.bg,border:`1px solid ${c.border}`,color:c.tx,borderRadius:7,padding:'8px 12px',lineHeight:1.5}}>{children}</div>;
+}
+
+/* ── SEARCHABLE DROPDOWN ─────────────────────────────────────────────────── */
+function SearchDrop({options,value,onChange,placeholder,labelKey='name',valueKey='id',disabled,hasErr,renderOption}){
+  const [q,setQ]=useState('');
+  const [open,setOpen]=useState(false);
+  const ref=useRef();
+  const filtered=useMemo(()=>options.filter(o=>(o[labelKey]||String(o)).toLowerCase().includes(q.toLowerCase())),[options,q,labelKey]);
+  const selected=options.find(o=>(o[valueKey]||o)===value);
+  useEffect(()=>{
+    const h=e=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false)};
+    document.addEventListener('mousedown',h);return()=>document.removeEventListener('mousedown',h);
+  },[]);
+  const bc=hasErr?'#fb7185':open?'#3b82f6':'#e2ddd6';
+  const bs=open?'0 0 0 3px rgba(59,130,246,.12)':hasErr?'0 0 0 3px rgba(251,113,133,.12)':'none';
+  return(
+    <div ref={ref} style={{position:'relative'}}>
+      <div onClick={()=>!disabled&&setOpen(!open)} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:6,background:disabled?'#f0ede6':'#fff',border:`1.5px solid ${bc}`,boxShadow:bs,borderRadius:7,padding:'8px 11px',cursor:disabled?'default':'pointer',minHeight:38}}>
+        <span style={{fontSize:13,color:selected?'#1c1917':'#a9a49e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}}>{selected?(selected[labelKey]||selected):(placeholder||'Select...')}</span>
+        <span style={{color:'#a9a49e',fontSize:10,flexShrink:0}}>{open?'▲':'▼'}</span>
+      </div>
+      {open&&(
+        <div style={{position:'absolute',top:'calc(100% + 4px)',left:0,right:0,zIndex:999,background:'#fff',border:'1.5px solid #e2ddd6',borderRadius:10,boxShadow:'0 8px 24px rgba(0,0,0,.12)',overflow:'hidden'}}>
+          <div style={{padding:'7px 7px 4px'}}><input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Search..." style={{fontSize:12,padding:'6px 10px'}} onClick={e=>e.stopPropagation()}/></div>
+          <div style={{maxHeight:210,overflowY:'auto'}}>
+            {filtered.length===0?<div style={{padding:'10px 14px',color:'#a9a49e',fontSize:13}}>No results</div>
+              :filtered.map(o=>(
+              <div key={o[valueKey]||o} onClick={()=>{onChange(o[valueKey]||o);setOpen(false);setQ('');}}
+                style={{padding:'8px 14px',cursor:'pointer',fontSize:13,background:value===(o[valueKey]||o)?'#f7f5f0':'transparent'}}
+                onMouseEnter={e=>e.currentTarget.style.background='#f7f5f0'}
+                onMouseLeave={e=>e.currentTarget.style.background=value===(o[valueKey]||o)?'#f7f5f0':'transparent'}>
+                {renderOption?renderOption(o):(o[labelKey]||o)}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── PROGRESS BAR ────────────────────────────────────────────────────────── */
+function ProgressBar({status}){
+  const cur=STATUS_FLOW.indexOf(status);
+  return(
+    <div style={{overflowX:'auto',paddingBottom:6}}>
+      <div style={{display:'flex',alignItems:'flex-start',minWidth:720,gap:0}}>
+        {STATUS_FLOW.map((s,i)=>{
+          const done=cur>i;const active=cur===i;
+          const m=STATUS_META[s]||{dot:'#ccc'};
+          return(
+            <React.Fragment key={s}>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',flex:1,minWidth:0}}>
+                <div style={{width:24,height:24,borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',background:active?m.dot:done?'#dcfce7':'#e8e3da',border:`2px solid ${active?m.dot:done?'#22c55e':'#c8c3b8'}`,fontSize:9,fontWeight:700,color:active?'#fff':done?'#14532d':'#8b8580',flexShrink:0,zIndex:1}}>
+                  {done?'✓':i+1}
+                </div>
+                <span style={{fontSize:9,color:active?m.dot:done?'#16a34a':'#a9a49e',textAlign:'center',marginTop:4,lineHeight:1.25,maxWidth:60,fontWeight:active?600:400}}>{s}</span>
+              </div>
+              {i<STATUS_FLOW.length-1&&<div style={{height:2,flex:1,background:done?'#86efac':'#e8e3da',marginTop:11,transition:'background .3s'}}/>}
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── ACTIVITY LOG ────────────────────────────────────────────────────────── */
+function ActivityLog({logs=[]}){
+  if(!logs.length)return<p style={{fontSize:12,color:'#a9a49e',fontStyle:'italic'}}>No activity yet</p>;
+  return(
+    <div>
+      {[...logs].reverse().map((l,i,arr)=>(
+        <div key={i} style={{display:'flex',gap:10,paddingBottom:i<arr.length-1?12:0,paddingLeft:18,position:'relative',borderLeft:i<arr.length-1?'1.5px solid #e2ddd6':'1.5px solid transparent',marginLeft:8}}>
+          <div style={{position:'absolute',left:-5,top:4,width:9,height:9,borderRadius:'50%',background:i===0?'#3b82f6':'#c8c3b8',border:'2px solid #fff'}}/>
+          <div>
+            <div style={{fontSize:12,fontWeight:500,color:'#1c1917'}}>{l.action}</div>
+            <div style={{fontSize:11,color:'#a9a49e',marginTop:1}}>{l.user} · {l.at}</div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── CONFIRM DIALOG ──────────────────────────────────────────────────────── */
+function ConfirmDialog({msg,confirmLabel='Confirm',confirmColor='#be123c',onYes,onNo}){
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.25)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:1000,padding:16}}>
+      <div style={{background:'#fff',border:'1.5px solid #e2ddd6',borderRadius:12,padding:'24px 28px',maxWidth:380,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,.18)'}}>
+        <p style={{fontSize:14,color:'#1c1917',marginBottom:20,lineHeight:1.6}}>{msg}</p>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+          <button onClick={onNo} style={{background:'#f0ede6',color:'#57524d',padding:'8px 18px',border:'1px solid #e2ddd6'}}>Cancel</button>
+          <button onClick={onYes} style={{background:confirmColor,color:'#fff',padding:'8px 18px'}}>{confirmLabel}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── USD RATE MANAGER ────────────────────────────────────────────────────── */
+function UsdRateWidget({rate,updatedAt,onChange}){
+  const [editing,setEditing]=useState(false);
+  const [val,setVal]=useState(String(rate));
+  const daysSince=updatedAt?Math.floor((new Date()-new Date(updatedAt+'T00:00'))/86400000):null;
+  const stale=daysSince!==null&&daysSince>3;
+  return(
+    <div style={{display:'inline-flex',alignItems:'center',gap:8,background:stale?'#fffbeb':'#f0ede6',border:`1px solid ${stale?'#fde68a':'#e2ddd6'}`,borderRadius:8,padding:'6px 12px'}}>
+      <span style={{fontSize:11,color:stale?'#92400e':'#57524d',fontWeight:500}}>USD Rate</span>
+      {editing?(
+        <>
+          <input value={val} onChange={e=>setVal(e.target.value)} style={{width:70,padding:'3px 7px',fontSize:13,borderRadius:5}} autoFocus/>
+          <button onClick={()=>{const n=Number(val);if(n>0){onChange(n,today());setEditing(false);}}} style={{background:'#1c1917',color:'#fff',padding:'3px 10px',fontSize:12}}>Set</button>
+          <button onClick={()=>{setVal(String(rate));setEditing(false);}} style={{background:'transparent',color:'#8b8580',padding:'3px 8px',fontSize:12,border:'1px solid #e2ddd6'}}>×</button>
+        </>
+      ):(
+        <>
+          <span style={{fontFamily:'DM Mono,monospace',fontSize:13,fontWeight:600,color:stale?'#92400e':'#1c1917'}}>₹{rate}</span>
+          {stale&&<span style={{fontSize:10,color:'#92400e',background:'#fde68a',padding:'1px 6px',borderRadius:10,fontWeight:500}}>Stale · {daysSince}d ago</span>}
+          {!stale&&updatedAt&&<span style={{fontSize:10,color:'#a9a49e'}}>Updated {fmt(updatedAt)}</span>}
+          <button onClick={()=>setEditing(true)} style={{background:'transparent',color:'#3b82f6',padding:'2px 8px',fontSize:11,border:'1px solid #bfdbfe',borderRadius:5}}>Update</button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ── ORDER FORM ──────────────────────────────────────────────────────────── */
+function OrderForm({order,parties,products,currentUser,allOrders,globalUsdRate,globalUsdDate,onSave,onCancel}){
+  const blank={
+    id:uid(),status:'Under Production',archived:false,remarks:'',
+    partyPONumber:'',partyPODate:'',freightType:'',partyId:'',invoiceNumber:'',
+    country:'',paymentTerms:'',productId:'',batchLotNumber:'',expiryDate:'',
+    quantity:'',unit:'Kg',totalValueUSD:'',antonPONumber:'',antonReleaseDate:'',
+    manufacturer:'',totalValueINR:'',antonPaymentTerms:'',expectedDelivery:'',
+    actualDelivery:'',paymentRemarks:'',paymentStatus:'Not Received',paymentDate:'',
+    postShipmentDocs:'',awbDate:'',awbNumber:'',adcCertNumber:'',
+    usdRate:globalUsdRate,usdRateUpdatedAt:globalUsdDate,
+    createdBy:currentUser?.name||'System',createdAt:today(),updatedAt:today(),logs:[]
+  };
+  const [f,setF]=useState(order?{...blank,...order}:{...blank});
+  const [errs,setErrs]=useState({});
+  const [activeTab,setActiveTab]=useState('basic');
+
+  // Allowed statuses for this order (sequential — only ±1 step)
+  const allowedStatuses=order?getAllowedStatuses(order.status):STATUS_LIST;
+
+  const set=(k,v)=>{
+    setF(prev=>{
+      const next={...prev,[k]:v};
+      if((k==='totalValueUSD'||k==='usdRate')&&next.totalValueUSD&&next.usdRate){
+        next.totalValueINR=Math.round(Number(next.totalValueUSD)*Number(next.usdRate));
+      }
+      // Auto-compute payment due date when AWB date or payment terms change
+      if(k==='awbDate'||k==='paymentTerms'){
+        next.paymentDueDate=computePayDue(k==='awbDate'?v:next.awbDate, k==='paymentTerms'?v:next.paymentTerms);
+      }
+      return next;
+    });
+    setErrs(e=>({...e,[k]:null}));
+  };
+
+  const setParty=(id)=>{
+    const p=parties.find(x=>x.id===id);
+    setF(prev=>{
+      const next={...prev,partyId:id,country:p?p.country:prev.country,paymentTerms:p?p.paymentTerms:prev.paymentTerms};
+      next.paymentDueDate=computePayDue(next.awbDate,next.paymentTerms);
+      return next;
+    });
+    setErrs(e=>({...e,partyId:null}));
+  };
+  const setProduct=(id)=>{
+    const p=products.find(x=>x.id===id);
+    setF(prev=>({...prev,productId:id,manufacturer:p?p.manufacturer:prev.manufacturer}));
+    setErrs(e=>({...e,productId:null}));
+  };
+
+  const validate=()=>{
+    const e={};
+    if(!f.partyId)e.partyId='Party is required';
+    if(!f.productId)e.productId='Product is required';
+    if(!f.status)e.status='Status is required';
+    if(!f.freightType)e.freightType='Freight type is required';
+    if(f.quantity!==''&&isNaN(Number(f.quantity)))e.quantity='Must be a number';
+    if(f.totalValueUSD!==''&&isNaN(Number(f.totalValueUSD)))e.totalValueUSD='Must be a number';
+
+    // Status-specific required fields
+    if(f.status==='Dispatch at Port'&&!f.awbDate)e.awbDate='AWB/BL Date is required when status is Dispatch at Port';
+    if(f.status==='Dispatch at Port'&&!f.awbNumber)e.awbNumber='AWB/BL Reference Number is required at Dispatch at Port';
+    if(f.status==='Cleared & Accepted'&&!f.actualDelivery)e.actualDelivery='Actual Delivery is required before marking Cleared & Accepted';
+    if(f.paymentStatus==='Received'&&!f.paymentDate)e.paymentDate='Payment Date is required when payment is Received';
+    if(f.status==='ADC Clearance Done'&&!f.adcCertNumber)e.adcCertNumber='ADC Certificate Number is required when clearance is done';
+
+    // Date cross-validations
+    if(f.partyPODate&&f.antonReleaseDate&&f.antonReleaseDate<f.partyPODate)e.antonReleaseDate='Anton Release cannot be before Party PO date';
+    if(f.partyPODate&&f.awbDate&&f.awbDate<f.partyPODate)e.awbDate=(e.awbDate||'')+'Shipment date cannot be before PO date';
+    if(f.awbDate&&f.actualDelivery&&f.actualDelivery<f.awbDate)e.actualDelivery=(e.actualDelivery||'')+'Delivery cannot be before shipment date';
+    if(f.partyPODate&&f.expectedDelivery&&f.expectedDelivery<f.partyPODate)e.expectedDelivery='Cannot be before PO date';
+
+    // Duplicate checks (Invoice, Party PO, Anton PO) — exclude current order
+    const others=allOrders.filter(o=>o.id!==f.id&&!o.archived);
+    if(f.invoiceNumber&&others.some(o=>o.invoiceNumber===f.invoiceNumber))e.invoiceNumber='Invoice number already exists on another order';
+    if(f.partyPONumber&&others.some(o=>o.partyPONumber===f.partyPONumber))e.partyPONumber='Party PO number already used';
+    if(f.antonPONumber&&others.some(o=>o.antonPONumber===f.antonPONumber))e.antonPONumber='Anton PO number already used';
+
+    setErrs(e);
+    return Object.keys(e).length===0;
+  };
+
+  const submit=()=>{
+    if(!validate())return;
+    const logEntry={user:currentUser?.name||'System',action:order?`Updated · Status: ${f.status}`:'Order created',at:nowStr()};
+    onSave({...f,updatedAt:today(),logs:[...(f.logs||[]),logEntry]});
+  };
+
+  const TABS=[
+    {id:'basic',label:'Basic Info'},
+    {id:'product',label:'Product & Value'},
+    {id:'shipping',label:'Shipping & Docs'},
+    {id:'payment',label:'Payment'},
+    {id:'activity',label:'Activity'},
+  ];
+
+  const inp=(k,type='text',extra={})=>{
+    const resolvedType=type==='number'?'text':type;
+    const inputMode=type==='number'?'decimal':undefined;
+    return<input type={resolvedType} inputMode={inputMode} value={f[k]!==undefined?f[k]:''} onChange={e=>set(k,e.target.value)} className={errs[k]?'err':''}/>;
+  };
+  const sel=(k,opts,allowedOpts)=>(
+    <select value={f[k]} onChange={e=>set(k,e.target.value)} className={errs[k]?'err':''}>
+      <option value="">Select…</option>
+      {(allowedOpts||opts).map(o=><option key={o}>{o}</option>)}
+    </select>
+  );
+  const G=({children,col=2})=><div style={{display:'grid',gridTemplateColumns:`repeat(${col},1fr)`,gap:14}}>{children}</div>;
+  const F=({k,label,req,hint,col,children})=>(
+    <div style={{gridColumn:col?`span ${col}`:'span 1'}}>
+      <Label text={label} req={req} hint={hint}/>
+      {children}
+      <ErrMsg msg={errs[k]}/>
+    </div>
+  );
+
+  return(
+    <div style={{background:'#fff',borderRadius:14,border:'1.5px solid #e2ddd6',overflow:'hidden',display:'flex',flexDirection:'column',maxHeight:'92vh'}}>
+      {/* Header */}
+      <div style={{padding:'14px 20px',borderBottom:'1px solid #e2ddd6',background:'#f7f5f0',display:'flex',alignItems:'center',justifyContent:'space-between',flexShrink:0}}>
+        <div>
+          <div style={{fontFamily:'Instrument Serif,serif',fontSize:19}}>{order?'Edit Order':'New Order'}</div>
+          <code style={{fontSize:11,color:'#a9a49e',fontFamily:'DM Mono,monospace'}}>{f.id}</code>
+        </div>
+        <div style={{display:'flex',gap:8}}>
+          <button onClick={onCancel} style={{background:'#f0ede6',color:'#3d3832',padding:'7px 15px',border:'1px solid #e2ddd6'}}>Cancel</button>
+          <button onClick={submit} style={{background:'#1c1917',color:'#f7f5f0',padding:'7px 18px'}}>Save Order</button>
+        </div>
+      </div>
+      {/* Progress */}
+      <div style={{padding:'12px 20px',borderBottom:'1px solid #e2ddd6',background:'#f0ede6',flexShrink:0}}>
+        <ProgressBar status={f.status}/>
+      </div>
+      {/* Tabs */}
+      <div style={{display:'flex',borderBottom:'1px solid #e2ddd6',background:'#fff',flexShrink:0,overflowX:'auto'}}>
+        {TABS.map(t=>(
+          <button key={t.id} onClick={()=>setActiveTab(t.id)} style={{background:'none',color:activeTab===t.id?'#1c1917':'#8b8580',padding:'10px 16px',borderRadius:0,fontWeight:activeTab===t.id?500:400,borderBottom:`2px solid ${activeTab===t.id?'#1c1917':'transparent'}`,fontSize:13,whiteSpace:'nowrap'}}>
+            {t.label}
+            {t.id==='activity'&&(f.logs||[]).length>0&&<span style={{marginLeft:5,background:'#e8e3da',color:'#57524d',borderRadius:10,padding:'1px 6px',fontSize:10}}>{(f.logs||[]).length}</span>}
+          </button>
+        ))}
+      </div>
+      {/* Body */}
+      <div style={{overflowY:'auto',flex:1,padding:20}} className="fade-in">
+
+        {activeTab==='basic'&&(
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <G>
+              <F k="status" label="Status" req>
+                {order
+                  ? <select value={f.status} onChange={e=>set('status',e.target.value)} className={errs.status?'err':''}>
+                      {allowedStatuses.map(s=><option key={s}>{s}</option>)}
+                    </select>
+                  : sel('status',STATUS_LIST)}
+                {order&&<InfoBox color="blue">Status can only advance one step at a time. Current: <strong>{order.status}</strong></InfoBox>}
+              </F>
+              <F k="freightType" label="Freight Type" req>{sel('freightType',FREIGHT)}</F>
+            </G>
+            <F k="partyId" label="Party Name" req>
+              <SearchDrop options={parties} value={f.partyId} onChange={setParty} placeholder="Search party…" labelKey="name" valueKey="id" hasErr={!!errs.partyId}
+                renderOption={o=><div><div style={{fontWeight:500}}>{o.name}</div><div style={{fontSize:11,color:'#a9a49e'}}>{o.country} · {o.paymentTerms}</div></div>}/>
+            </F>
+            <G>
+              <F k="country" label="Country" hint="auto-filled">{inp('country')}</F>
+              <F k="paymentTerms" label="Payment Terms">{sel('paymentTerms',PAY_TERMS)}</F>
+              <F k="partyPONumber" label="Party PO Number" hint="must be unique">{inp('partyPONumber')}</F>
+              <F k="partyPODate" label="Party PO Date">{inp('partyPODate','date')}</F>
+              <F k="invoiceNumber" label="Invoice Number" hint="must be unique">{inp('invoiceNumber')}</F>
+              <F k="antonPONumber" label="Anton PO Number" hint="must be unique">{inp('antonPONumber')}</F>
+              <F k="antonReleaseDate" label="Anton Release Date">{inp('antonReleaseDate','date')}</F>
+              <F k="antonPaymentTerms" label="Anton Payment Terms">{sel('antonPaymentTerms',ANTON_TERMS)}</F>
+            </G>
+            <F k="remarks" label="Remarks"><textarea value={f.remarks} onChange={e=>set('remarks',e.target.value)} rows={2}/></F>
+          </div>
+        )}
+
+        {activeTab==='product'&&(
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <F k="productId" label="Product" req>
+              <SearchDrop options={products} value={f.productId} onChange={setProduct} placeholder="Search product…" labelKey="productName" valueKey="id" hasErr={!!errs.productId}
+                renderOption={o=><div><div style={{fontWeight:500}}>{o.productName}</div><div style={{fontSize:11,color:'#a9a49e'}}>{o.manufacturer} · HS: {o.hsCode||'—'}</div></div>}/>
+            </F>
+            <G>
+              <F k="manufacturer" label="Manufacturer" hint="auto-filled">{inp('manufacturer')}</F>
+              <F k="batchLotNumber" label="Batch / Lot Number" hint="required for ADC">{inp('batchLotNumber')}</F>
+              <F k="expiryDate" label="Expiry Date of Goods" hint="required for ADC">{inp('expiryDate','date')}</F>
+              <div/>
+              <F k="quantity" label="Quantity">{inp('quantity','number',{min:0})}</F>
+              <F k="unit" label="Unit">{sel('unit',UNITS)}</F>
+            </G>
+            <div style={{background:'#f0ede6',border:'1px solid #e2ddd6',borderRadius:10,padding:14}}>
+              <div style={{fontSize:12,fontWeight:600,color:'#57524d',marginBottom:12}}>Value Calculation</div>
+              <G>
+                <F k="totalValueUSD" label="Total Value (USD)">{inp('totalValueUSD','number',{min:0})}</F>
+                <F k="usdRate" label="USD → INR Rate">
+                  {inp('usdRate','number',{min:0,step:'0.01'})}
+                  {f.usdRateUpdatedAt&&(()=>{const d=Math.floor((new Date()-new Date(f.usdRateUpdatedAt+'T00:00'))/86400000);return d>3?<InfoBox color="amber">Rate is {d} days old. Consider updating.</InfoBox>:null;})()}
+                </F>
+              </G>
+              <div style={{marginTop:12}}>
+                <F k="totalValueINR" label="Total Value (INR)" hint="auto-calculated · editable">{inp('totalValueINR','number',{min:0})}</F>
+              </div>
+              {f.totalValueUSD&&f.usdRate&&<InfoBox color="green">{money(f.totalValueUSD)} × ₹{f.usdRate} = ₹{Number(f.totalValueUSD*f.usdRate).toLocaleString('en-IN')}</InfoBox>}
+            </div>
+          </div>
+        )}
+
+        {activeTab==='shipping'&&(
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <G>
+              <F k="expectedDelivery" label="Expected Delivery">{inp('expectedDelivery','date')}</F>
+              <F k="actualDelivery" label="Actual Delivery" req={f.status==='Cleared & Accepted'} hint={f.status==='Cleared & Accepted'?'Required for this status':''}>{inp('actualDelivery','date')}</F>
+              <F k="awbDate" label="AWB / BL Date" req={f.status==='Dispatch at Port'} hint={f.status==='Dispatch at Port'?'Required at this status':''}>{inp('awbDate','date')}</F>
+              <F k="awbNumber" label="AWB / BL Reference Number" req={f.status==='Dispatch at Port'} hint="Carrier tracking reference">{inp('awbNumber')}</F>
+              <F k="adcCertNumber" label="ADC Clearance Certificate #" req={f.status==='ADC Clearance Done'} hint={f.status==='ADC Clearance Done'?'Required at this status':''}>{inp('adcCertNumber')}</F>
+            </G>
+            <F k="postShipmentDocs" label="Post Shipment Docs"><textarea value={f.postShipmentDocs} onChange={e=>set('postShipmentDocs',e.target.value)} rows={3}/></F>
+          </div>
+        )}
+
+        {activeTab==='payment'&&(
+          <div style={{display:'flex',flexDirection:'column',gap:14}}>
+            <G>
+              <F k="paymentStatus" label="Payment Status">{sel('paymentStatus',PAY_STATUS)}</F>
+              <F k="paymentDate" label="Payment Date" req={f.paymentStatus==='Received'} hint={f.paymentStatus==='Received'?'Required when Received':''}>{inp('paymentDate','date')}</F>
+            </G>
+            {f.paymentDueDate&&(
+              <InfoBox color={daysLeft(f.paymentDueDate)<0?'red':daysLeft(f.paymentDueDate)<=7?'amber':'blue'}>
+                Payment Due: <strong>{fmt(f.paymentDueDate)}</strong>
+                {daysLeft(f.paymentDueDate)<0?` — Overdue by ${Math.abs(daysLeft(f.paymentDueDate))} days`:daysLeft(f.paymentDueDate)===0?' — Due today':` — ${daysLeft(f.paymentDueDate)} days remaining`}
+              </InfoBox>
+            )}
+            <F k="paymentRemarks" label="Payment Remarks"><textarea value={f.paymentRemarks} onChange={e=>set('paymentRemarks',e.target.value)} rows={3}/></F>
+          </div>
+        )}
+
+        {activeTab==='activity'&&<ActivityLog logs={f.logs||[]}/>}
+      </div>
+    </div>
+  );
+}
+
+/* ── ACTION REQUIRED WIDGET ──────────────────────────────────────────────── */
+function ActionRequired({orders,parties,onEdit}){
+  const items=[];
+  orders.filter(o=>!o.archived).forEach(o=>{
+    const party=parties.find(p=>p.id===o.partyId);
+    const name=party?.name||o.id;
+    const dl=daysLeft(o.expectedDelivery);
+    const payDl=daysLeft(o.paymentDueDate);
+    if(['Under ADC Clearance','ADC Clearance Done'].includes(o.status))
+      items.push({id:o.id,type:'clearance',msg:`${name} — Stuck in ADC clearance`,color:'violet',order:o});
+    if(o.paymentDueDate&&payDl!==null&&payDl<=7&&o.paymentStatus==='Not Received')
+      items.push({id:o.id+'-pay',type:'payment',msg:`${name} — Payment ${payDl<0?`overdue ${Math.abs(payDl)}d`:`due in ${payDl}d`}`,color:payDl<0?'red':'amber',order:o});
+    if(dl!==null&&dl>=0&&dl<=7&&o.status!=='Cleared & Accepted')
+      items.push({id:o.id+'-del',type:'delivery',msg:`${name} — Delivery ${dl===0?'today':`in ${dl}d`}`,color:dl<=2?'red':'amber',order:o});
+  });
+  if(!items.length)return null;
+  return(
+    <div style={{background:'#fff',border:'1.5px solid #fde68a',borderRadius:12,padding:'14px 16px',marginBottom:4}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:10}}>
+        <span style={{fontSize:14}}>⚡</span>
+        <div style={{fontFamily:'Instrument Serif,serif',fontSize:15}}>Action Required</div>
+        <span style={{marginLeft:'auto',background:'#fde68a',color:'#92400e',borderRadius:10,padding:'1px 7px',fontSize:11,fontWeight:600}}>{items.length}</span>
+      </div>
+      <div style={{display:'flex',flexDirection:'column',gap:6}}>
+        {items.map(it=>(
+          <div key={it.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8,padding:'7px 10px',background:it.color==='red'?'#fff1f2':it.color==='amber'?'#fffbeb':it.color==='violet'?'#f5f3ff':'#f0ede6',borderRadius:7,border:`1px solid ${it.color==='red'?'#fecaca':it.color==='amber'?'#fde68a':it.color==='violet'?'#ddd6fe':'#e2ddd6'}`}}>
+            <span style={{fontSize:12,color:it.color==='red'?'#9f1239':it.color==='amber'?'#92400e':it.color==='violet'?'#5b21b6':'#3d3832'}}>{it.msg}</span>
+            <button onClick={()=>onEdit(it.order)} style={{background:'#fff',color:'#1c1917',padding:'3px 10px',fontSize:11,border:'1px solid #e2ddd6',flexShrink:0}}>View</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── DASHBOARD ───────────────────────────────────────────────────────────── */
+function Dashboard({orders,parties,products,onEditOrder}){
+  const active=orders.filter(o=>!o.archived);
+  const pendingShip=active.filter(o=>['Pending Shipment','Dispatch at Port','Outward Transit'].includes(o.status)).length;
+  const payPending=active.filter(o=>o.paymentStatus==='Not Received').length;
+  const payOverdue=active.filter(o=>o.paymentDueDate&&daysLeft(o.paymentDueDate)<0&&o.paymentStatus!=='Received').length;
+  const delOverdue=active.filter(o=>o.status!=='Cleared & Accepted'&&o.expectedDelivery&&daysLeft(o.expectedDelivery)<0).length;
+  const totalUSD=active.reduce((a,o)=>a+(Number(o.totalValueUSD)||0),0);
+  const kpis=[
+    {label:'Active Orders',v:active.length,c:'#1e40af',bg:'#eff6ff',sub:`${orders.filter(o=>o.archived).length} archived`},
+    {label:'Pending Shipments',v:pendingShip,c:'#92400e',bg:'#fffbeb',sub:'Awaiting dispatch'},
+    {label:'Payments Pending',v:payPending,c:'#9f1239',bg:'#fff1f2',sub:`${payOverdue} overdue`},
+    {label:'Delivery Overdue',v:delOverdue,c:'#7c2d12',bg:'#fff7ed',sub:'Past expected date'},
+    {label:'Total Value (USD)',v:money(totalUSD),c:'#14532d',bg:'#f0fdf4',sub:'Active orders'},
+    {label:'Parties · Products',v:`${parties.length} · ${products.length}`,c:'#134e4a',bg:'#f0fdfa',sub:'Master records'},
+  ];
+  const bySt={};STATUS_LIST.forEach(s=>bySt[s]=active.filter(o=>o.status===s).length);
+  const maxBar=Math.max(...Object.values(bySt),1);
+  const recent=[...active].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||'')).slice(0,5);
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:18}} className="fade-in">
+      <div>
+        <div style={{fontFamily:'Instrument Serif,serif',fontSize:26}}>Supply Chain Overview</div>
+        <div style={{color:'#8b8580',fontSize:13,marginTop:2}}>{new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+      </div>
+      <ActionRequired orders={orders} parties={parties} onEdit={onEditOrder}/>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+        {kpis.map(k=>(
+          <div key={k.label} style={{background:k.bg,border:`1px solid ${k.c}22`,borderRadius:12,padding:'15px 17px'}}>
+            <div style={{fontSize:11,fontWeight:600,textTransform:'uppercase',letterSpacing:.5,color:k.c,marginBottom:5}}>{k.label}</div>
+            <div style={{fontSize:22,fontWeight:600,color:k.c,fontFamily:'DM Mono,monospace',letterSpacing:'-.02em'}}>{k.v}</div>
+            <div style={{fontSize:11,color:k.c,opacity:.65,marginTop:2}}>{k.sub}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'3fr 2fr',gap:14}}>
+        <div style={{background:'#fff',border:'1px solid #e2ddd6',borderRadius:12,padding:'17px 19px'}}>
+          <div style={{fontFamily:'Instrument Serif,serif',fontSize:16,marginBottom:14}}>Orders by Status</div>
+          {STATUS_LIST.map(s=>{const n=bySt[s]||0;const pct=Math.round(n/maxBar*100);const m=STATUS_META[s]||{dot:'#ccc'};
+            return(
+              <div key={s} style={{marginBottom:9}}>
+                <div style={{display:'flex',justifyContent:'space-between',marginBottom:3}}>
+                  <span style={{fontSize:12,color:'#3d3832',display:'flex',alignItems:'center',gap:5}}><span style={{width:6,height:6,borderRadius:'50%',background:m.dot,display:'inline-block',flexShrink:0}}/>{s}</span>
+                  <span style={{fontSize:12,fontFamily:'DM Mono,monospace',color:'#8b8580'}}>{n}</span>
+                </div>
+                <div style={{background:'#e8e3da',borderRadius:3,height:5}}><div style={{height:5,borderRadius:3,background:m.dot,width:`${pct}%`,opacity:.75}}/></div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:12}}>
+          <div style={{background:'#fff',border:'1px solid #e2ddd6',borderRadius:12,padding:'17px 19px',flex:1}}>
+            <div style={{fontFamily:'Instrument Serif,serif',fontSize:16,marginBottom:12}}>Recent Updates</div>
+            {recent.map((o,i)=>{
+              const party=parties.find(p=>p.id===o.partyId);
+              return(
+                <div key={o.id} style={{paddingBottom:9,marginBottom:i<recent.length-1?9:0,borderBottom:i<recent.length-1?'1px solid #e8e3da':'none'}}>
+                  <div style={{display:'flex',justifyContent:'space-between',gap:6,marginBottom:3}}>
+                    <code style={{fontSize:10,color:'#1e40af',fontFamily:'DM Mono,monospace'}}>{o.id}</code>
+                    <StatusBadge status={o.status}/>
+                  </div>
+                  <div style={{fontSize:12,fontWeight:500}}>{party?.name||'—'}</div>
+                </div>
+              );
+            })}
+            {recent.length===0&&<p style={{fontSize:12,color:'#a9a49e',fontStyle:'italic'}}>No orders yet</p>}
+          </div>
+          <div style={{background:'#fff',border:'1px solid #e2ddd6',borderRadius:12,padding:'17px 19px'}}>
+            <div style={{fontFamily:'Instrument Serif,serif',fontSize:16,marginBottom:10}}>Quick Stats</div>
+            {[['Completed',orders.filter(o=>o.status==='Cleared & Accepted').length],['Paid in Full',orders.filter(o=>o.paymentStatus==='Received').length],['Archived',orders.filter(o=>o.archived).length],['Products',products.length]].map(([l,v])=>(
+              <div key={l} style={{display:'flex',justifyContent:'space-between',padding:'6px 0',borderBottom:'1px solid #e8e3da'}}>
+                <span style={{fontSize:12,color:'#8b8580'}}>{l}</span>
+                <span style={{fontSize:13,fontWeight:600,fontFamily:'DM Mono,monospace'}}>{v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── ORDER ROW ───────────────────────────────────────────────────────────── */
+function OrderRow({order,parties,products,onEdit,onArchive,onDuplicate}){
+  const [exp,setExp]=useState(false);
+  const party=parties.find(p=>p.id===order.partyId);
+  const product=products.find(p=>p.id===order.productId);
+  const dl=daysLeft(order.expectedDelivery);
+  const payDl=daysLeft(order.paymentDueDate);
+  const overdue=dl!==null&&dl<0&&order.status!=='Cleared & Accepted';
+  const soon=dl!==null&&dl>=0&&dl<=3&&order.status!=='Cleared & Accepted';
+  const payOverdue=payDl!==null&&payDl<0&&order.paymentStatus!=='Received';
+  return(
+    <>
+      <tr onClick={()=>setExp(!exp)} style={{borderBottom:'1px solid #e8e3da',background:order.archived?'#fdfcf9':exp?'#fdfcf9':'transparent',cursor:'pointer',opacity:order.archived?.6:1}}>
+        <td style={{padding:'9px 11px'}}><code style={{fontSize:11,color:'#1e40af',fontFamily:'DM Mono,monospace'}}>{order.id}</code>{order.archived&&<span style={{marginLeft:6,fontSize:10,color:'#a9a49e',background:'#f0ede6',borderRadius:10,padding:'1px 6px'}}>archived</span>}</td>
+        <td style={{padding:'9px 11px'}}><div style={{fontSize:13,fontWeight:500}}>{party?.name||'—'}</div><div style={{fontSize:11,color:'#8b8580'}}>{order.country}</div></td>
+        <td style={{padding:'9px 11px',fontSize:13}}>{product?.productName||'—'}</td>
+        <td style={{padding:'9px 11px'}}><StatusBadge status={order.status}/></td>
+        <td style={{padding:'9px 11px'}}><Pill label={order.paymentStatus||'—'} color={order.paymentStatus==='Received'?'green':order.paymentStatus==='Partial'?'amber':'red'}/></td>
+        <td style={{padding:'9px 11px',fontFamily:'DM Mono,monospace',fontSize:12,fontWeight:500}}>{money(order.totalValueUSD)}</td>
+        <td style={{padding:'9px 11px'}}>
+          {payOverdue?<Pill label={`Pay ${Math.abs(payDl)}d overdue`} color="red"/>:payDl!==null&&payDl<=7&&order.paymentStatus!=='Received'?<Pill label={`Pay due ${payDl}d`} color="amber"/>:null}
+        </td>
+        <td style={{padding:'9px 11px'}}>
+          {overdue?<Pill label={`Del ${Math.abs(dl)}d late`} color="red"/>:soon?<Pill label={`Del in ${dl}d`} color="amber"/>:<span style={{fontSize:12,color:'#8b8580'}}>{fmt(order.expectedDelivery)}</span>}
+        </td>
+        <td style={{padding:'9px 11px'}} onClick={e=>e.stopPropagation()}>
+          {(order.logs||[]).length>0?(()=>{const last=(order.logs||[]).slice(-1)[0];return(
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <Avatar name={last.user} size={20}/>
+              <div><div style={{fontSize:12,fontWeight:500}}>{last.user}</div><div style={{fontSize:10,color:'#a9a49e'}}>{last.at}</div></div>
+            </div>
+          );})():<span style={{fontSize:11,color:'#c8c3b8',fontStyle:'italic'}}>—</span>}
+        </td>
+        <td style={{padding:'9px 11px'}} onClick={e=>e.stopPropagation()}>
+          <div style={{display:'flex',gap:4}}>
+            <button onClick={()=>onEdit(order)} style={{background:'#f0ede6',color:'#3d3832',padding:'4px 9px',border:'1px solid #e2ddd6',fontSize:11}}>Edit</button>
+            <button onClick={()=>onDuplicate(order)} style={{background:'#eff6ff',color:'#1e40af',padding:'4px 9px',border:'1px solid #bfdbfe',fontSize:11}} title="Duplicate order">⧉</button>
+            <button onClick={()=>onArchive(order.id)} style={{background:order.archived?'#f0ede6':'#fff7ed',color:order.archived?'#57524d':'#92400e',padding:'4px 9px',border:`1px solid ${order.archived?'#e2ddd6':'#fde68a'}`,fontSize:11}} title={order.archived?'Unarchive':'Archive'}>{order.archived?'↩':'▾'}</button>
+          </div>
+        </td>
+      </tr>
+      {exp&&(
+        <tr style={{background:'#fdfcf9',borderBottom:'1px solid #e8e3da'}}>
+          <td colSpan={10} style={{padding:'0 14px 16px'}}>
+            <div style={{paddingTop:12}}>
+              <ProgressBar status={order.status}/>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:'8px 20px',marginTop:12,fontSize:12}}>
+                {[
+                  ['Party PO #',order.partyPONumber],['Invoice #',order.invoiceNumber],
+                  ['Anton PO #',order.antonPONumber],['Manufacturer',order.manufacturer],
+                  ['Batch/Lot #',order.batchLotNumber||'—'],['Expiry Date',fmt(order.expiryDate)],
+                  ['AWB/BL #',order.awbNumber||'—'],['AWB Date',fmt(order.awbDate)],
+                  ['ADC Cert #',order.adcCertNumber||'—'],['Actual Delivery',fmt(order.actualDelivery)],
+                  ['Payment Due',fmt(order.paymentDueDate)],['Payment Date',fmt(order.paymentDate)],
+                  ['Value INR',money(order.totalValueINR,'₹')],['USD Rate',order.usdRate?`₹${order.usdRate}`:'—'],
+                  ['Post Shipment',order.postShipmentDocs||'—'],['Created by',order.createdBy||'—'],
+                ].map(([k,v])=>(
+                  <div key={k}><div style={{color:'#a9a49e',fontSize:10,fontWeight:600,textTransform:'uppercase',letterSpacing:.4,marginBottom:2}}>{k}</div><div style={{color:v&&v!=='—'?'#1c1917':'#c8c3b8'}}>{v}</div></div>
+                ))}
+              </div>
+              {(order.logs||[]).length>0&&(
+                <div style={{marginTop:12,paddingTop:12,borderTop:'1px solid #e8e3da'}}>
+                  <div style={{fontSize:10,fontWeight:600,color:'#8b8580',textTransform:'uppercase',letterSpacing:.5,marginBottom:8}}>Activity Log</div>
+                  <ActivityLog logs={order.logs}/>
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+/* ── ORDER TRACKER ───────────────────────────────────────────────────────── */
+function OrderTracker({orders,setOrders,saveOrder,parties,products,currentUser,globalUsdRate,globalUsdDate,setGlobalUsd}){
+  const [showForm,setShowForm]=useState(false);
+  const [editing,setEditing]=useState(null);
+  const [view,setView]=useState('table');
+  const [search,setSearch]=useState('');
+  const [fSt,setFSt]=useState('');
+  const [fPty,setFPty]=useState('');
+  const [fPay,setFPay]=useState('');
+  const [showArchived,setShowArchived]=useState(false);
+  const [dateFrom,setDateFrom]=useState('');
+  const [dateTo,setDateTo]=useState('');
+  const [sortKey,setSortKey]=useState('updatedAt');
+  const [sortDir,setSortDir]=useState('desc');
+  const [archiveId,setArchiveId]=useState(null);
+
+  const filtered=useMemo(()=>{
+    let list=[...orders];
+    if(!showArchived)list=list.filter(o=>!o.archived);
+    if(search){const q=search.toLowerCase();list=list.filter(o=>{const pty=parties.find(p=>p.id===o.partyId);const prd=products.find(p=>p.id===o.productId);return(o.id+(pty?.name||'')+(prd?.productName||'')+o.invoiceNumber+o.antonPONumber+o.awbNumber).toLowerCase().includes(q);});}
+    if(fSt)list=list.filter(o=>o.status===fSt);
+    if(fPty)list=list.filter(o=>o.partyId===fPty);
+    if(fPay)list=list.filter(o=>o.paymentStatus===fPay);
+    if(dateFrom)list=list.filter(o=>o.partyPODate>=dateFrom);
+    if(dateTo)list=list.filter(o=>o.partyPODate<=dateTo);
+    list.sort((a,b)=>{const av=a[sortKey]||'',bv=b[sortKey]||'';return sortDir==='asc'?(av>bv?1:-1):(av<bv?1:-1);});
+    return list;
+  },[orders,search,fSt,fPty,fPay,dateFrom,dateTo,sortKey,sortDir,parties,products,showArchived]);
+
+  const exportCSV=()=>{
+    const h=['ID','Party','Country','Product','Batch/Lot','Status','Freight','Qty','Unit','USD','INR','AWB#','ADC Cert#','Payment Status','Pay Due','Exp Delivery','Actual Delivery','Created By'];
+    const rows=filtered.map(o=>{const pty=parties.find(p=>p.id===o.partyId);const prd=products.find(p=>p.id===o.productId);return[o.id,pty?.name||'',o.country,prd?.productName||'',o.batchLotNumber,o.status,o.freightType,o.quantity,o.unit,o.totalValueUSD,o.totalValueINR,o.awbNumber,o.adcCertNumber,o.paymentStatus,o.paymentDueDate,o.expectedDelivery,o.actualDelivery,o.createdBy];});
+    const csv=[h,...rows].map(r=>r.map(c=>`"${String(c||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`orders-${today()}.csv`;a.click();
+  };
+
+  const save=o=>{
+    const prev=editing?orders.find(x=>x.id===o.id):null;
+    saveOrder(o,prev||null);
+    setShowForm(false);setEditing(null);
+  };
+
+  const doArchive=(id)=>{
+    setOrders(prev=>prev.map(o=>{
+      if(o.id!==id)return o;
+      const newArchived=!o.archived;
+      const logEntry={user:currentUser?.name||'System',action:newArchived?'Order archived':'Order unarchived',at:nowStr()};
+      return{...o,archived:newArchived,logs:[...(o.logs||[]),logEntry]};
+    }));
+    setArchiveId(null);
+  };
+
+  const duplicate=(o)=>{
+    const newO={...o,id:uid(),status:'Under Production',archived:false,invoiceNumber:'',partyPONumber:'',antonPONumber:'',awbNumber:'',awbDate:'',actualDelivery:'',paymentDate:'',paymentDueDate:'',paymentStatus:'Not Received',adcCertNumber:'',batchLotNumber:'',expiryDate:'',createdBy:currentUser?.name||'System',createdAt:today(),updatedAt:today(),logs:[{user:currentUser?.name||'System',action:`Duplicated from ${o.id}`,at:nowStr()}]};
+    setEditing(newO);setShowForm(true);
+  };
+
+  const openEdit=o=>{setEditing(o);setShowForm(true);};
+  const clearF=()=>{setSearch('');setFSt('');setFPty('');setFPay('');setDateFrom('');setDateTo('');};
+  const hasF=search||fSt||fPty||fPay||dateFrom||dateTo;
+  const sortCol=(k)=>{if(sortKey===k)setSortDir(d=>d==='asc'?'desc':'asc');else{setSortKey(k);setSortDir('asc');}};
+
+  if(showForm)return(
+    <div className="fade-in">
+      <button onClick={()=>{setShowForm(false);setEditing(null);}} style={{background:'#f0ede6',color:'#3d3832',padding:'7px 14px',border:'1px solid #e2ddd6',marginBottom:14,fontSize:13}}>← Back to Orders</button>
+      <OrderForm order={editing} parties={parties} products={products} currentUser={currentUser} allOrders={orders} globalUsdRate={globalUsdRate} globalUsdDate={globalUsdDate} onSave={save} onCancel={()=>{setShowForm(false);setEditing(null);}}/>
+    </div>
+  );
+
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:14}} className="fade-in">
+      {archiveId&&<ConfirmDialog msg={orders.find(o=>o.id===archiveId)?.archived?'Unarchive this order? It will reappear in the main list.':'Archive this order? It will be hidden from the main list but preserved in the audit log.'} confirmLabel={orders.find(o=>o.id===archiveId)?.archived?'Unarchive':'Archive'} confirmColor="#92400e" onYes={()=>doArchive(archiveId)} onNo={()=>setArchiveId(null)}/>}
+
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:10}}>
+        <div>
+          <div style={{fontFamily:'Instrument Serif,serif',fontSize:22}}>Order Tracker</div>
+          <div style={{color:'#8b8580',fontSize:13}}>{filtered.length} of {orders.filter(o=>!o.archived).length} orders</div>
+        </div>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
+          <UsdRateWidget rate={globalUsdRate} updatedAt={globalUsdDate} onChange={(r,d)=>setGlobalUsd(r,d)}/>
+          <button onClick={exportCSV} style={{background:'#fff',border:'1.5px solid #e2ddd6',color:'#3d3832',padding:'7px 14px'}}>Export CSV</button>
+          <div style={{display:'flex',background:'#f0ede6',border:'1px solid #e2ddd6',borderRadius:7,overflow:'hidden'}}>
+            {['table','card'].map(v=>(
+              <button key={v} onClick={()=>setView(v)} style={{background:v===view?'#fff':'transparent',color:v===view?'#1c1917':'#8b8580',padding:'7px 14px',borderRadius:0,border:'none',fontWeight:v===view?500:400}}>
+                {v==='table'?'Table':'Cards'}
+              </button>
+            ))}
+          </div>
+          <button onClick={()=>{setEditing(null);setShowForm(true);}} style={{background:'#1c1917',color:'#f7f5f0',padding:'7px 18px'}}>+ New Order</button>
+        </div>
+      </div>
+
+      <div style={{background:'#fff',border:'1px solid #e2ddd6',borderRadius:12,padding:'12px 14px',display:'flex',flexWrap:'wrap',gap:10,alignItems:'center'}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search orders, AWB#, invoice, party…" style={{flex:'1 1 200px',minWidth:180}}/>
+        <select value={fSt} onChange={e=>setFSt(e.target.value)} style={{width:188}}>
+          <option value="">All Statuses</option>{STATUS_LIST.map(s=><option key={s}>{s}</option>)}
+        </select>
+        <select value={fPty} onChange={e=>setFPty(e.target.value)} style={{width:155}}>
+          <option value="">All Parties</option>{parties.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        <select value={fPay} onChange={e=>setFPay(e.target.value)} style={{width:140}}>
+          <option value="">Payment</option>{PAY_STATUS.map(s=><option key={s}>{s}</option>)}
+        </select>
+        <label style={{display:'flex',alignItems:'center',gap:5,fontSize:12,color:'#57524d',cursor:'pointer',whiteSpace:'nowrap'}}>
+          <input type="checkbox" checked={showArchived} onChange={e=>setShowArchived(e.target.checked)} style={{width:'auto',margin:0}}/> Show Archived
+        </label>
+        <div style={{display:'flex',alignItems:'center',gap:5}}>
+          <span style={{fontSize:12,color:'#a9a49e',whiteSpace:'nowrap'}}>PO Date</span>
+          <input type="date" value={dateFrom} onChange={e=>setDateFrom(e.target.value)} style={{width:126}}/>
+          <span style={{color:'#c8c3b8'}}>–</span>
+          <input type="date" value={dateTo} onChange={e=>setDateTo(e.target.value)} style={{width:126}}/>
+        </div>
+        {hasF&&<button onClick={clearF} style={{background:'#fff1f2',color:'#be123c',border:'1px solid #fecaca',padding:'6px 12px',fontSize:12}}>Clear</button>}
+      </div>
+
+      {view==='card'?(
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(265px,1fr))',gap:12}}>
+          {filtered.map(o=>{
+            const pty=parties.find(p=>p.id===o.partyId);
+            const prd=products.find(p=>p.id===o.productId);
+            const dl=daysLeft(o.expectedDelivery);
+            const overdue=dl!==null&&dl<0&&o.status!=='Cleared & Accepted';
+            const payDl=daysLeft(o.paymentDueDate);
+            return(
+              <div key={o.id} style={{background:'#fff',border:'1.5px solid #e2ddd6',borderRadius:12,padding:'14px 15px',display:'flex',flexDirection:'column',gap:9,opacity:o.archived?.6:1}}
+                onMouseEnter={e=>e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'}
+                onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}>
+                <div style={{display:'flex',justifyContent:'space-between',gap:6}}>
+                  <code style={{fontSize:11,color:'#1e40af',fontFamily:'DM Mono,monospace'}}>{o.id}</code>
+                  <StatusBadge status={o.status}/>
+                </div>
+                <div style={{fontFamily:'Instrument Serif,serif',fontSize:16,lineHeight:1.3}}>{pty?.name||'—'}</div>
+                <div style={{fontSize:12,color:'#8b8580'}}>{prd?.productName||'—'}</div>
+                {o.batchLotNumber&&<div style={{fontSize:11,color:'#8b8580'}}>Batch: {o.batchLotNumber}</div>}
+                <div style={{display:'flex',gap:5,flexWrap:'wrap'}}>
+                  <Pill label={o.paymentStatus} color={o.paymentStatus==='Received'?'green':o.paymentStatus==='Partial'?'amber':'red'}/>
+                  {payDl!==null&&payDl<=7&&o.paymentStatus!=='Received'&&<Pill label={payDl<0?`Pay ${Math.abs(payDl)}d OD`:`Pay in ${payDl}d`} color={payDl<0?'red':'amber'}/>}
+                </div>
+                <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',paddingTop:8,borderTop:'1px solid #e8e3da'}}>
+                  <span style={{fontFamily:'DM Mono,monospace',fontSize:13,fontWeight:500}}>{money(o.totalValueUSD)}</span>
+                  {overdue?<Pill label={`${Math.abs(dl)}d late`} color="red"/>:<span style={{fontSize:11,color:'#a9a49e'}}>{fmt(o.expectedDelivery)}</span>}
+                </div>
+                <div style={{display:'flex',gap:6}}>
+                  <button onClick={()=>openEdit(o)} style={{flex:1,background:'#f0ede6',color:'#3d3832',padding:'7px',border:'1px solid #e2ddd6',fontSize:12}}>Edit</button>
+                  <button onClick={()=>duplicate(o)} style={{background:'#eff6ff',color:'#1e40af',padding:'7px 10px',border:'1px solid #bfdbfe',fontSize:12}} title="Duplicate">⧉</button>
+                  <button onClick={()=>setArchiveId(o.id)} style={{background:o.archived?'#f0ede6':'#fff7ed',color:o.archived?'#57524d':'#92400e',padding:'7px 10px',border:`1px solid ${o.archived?'#e2ddd6':'#fde68a'}`,fontSize:12}} title={o.archived?'Unarchive':'Archive'}>{o.archived?'↩':'▾'}</button>
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length===0&&<div style={{gridColumn:'1/-1',padding:40,textAlign:'center',color:'#a9a49e',fontStyle:'italic'}}>No orders match your filters</div>}
+        </div>
+      ):(
+        <div style={{background:'#fff',border:'1px solid #e2ddd6',borderRadius:12,overflow:'hidden'}}>
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead><tr style={{background:'#f7f5f0'}}>
+                {[['Order ID','id'],['Party',''],['Product',''],['Status','status'],['Payment','paymentStatus'],['Value USD','totalValueUSD'],['Pay Alert',''],['Delivery','expectedDelivery'],['Last Edit By',''],['Actions','']].map(([h,k])=>(
+                  <th key={h} onClick={k?()=>sortCol(k):undefined} style={{padding:'9px 11px',textAlign:'left',fontSize:11,fontWeight:600,color:'#6b6560',letterSpacing:.5,textTransform:'uppercase',borderBottom:'1px solid #e2ddd6',whiteSpace:'nowrap',cursor:k?'pointer':'default',userSelect:'none'}}>
+                    {h}{k&&sortKey===k?<span style={{marginLeft:3,opacity:.5}}>{sortDir==='asc'?'↑':'↓'}</span>:null}
+                  </th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {filtered.map(o=><OrderRow key={o.id} order={o} parties={parties} products={products} onEdit={openEdit} onArchive={id=>setArchiveId(id)} onDuplicate={duplicate}/>)}
+                {filtered.length===0&&<tr><td colSpan={9} style={{padding:40,textAlign:'center',color:'#a9a49e',fontStyle:'italic'}}>No orders found</td></tr>}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── PARTY MASTER ────────────────────────────────────────────────────────── */
+function PartyMaster({parties,saveParty,deleteParty,currentUser}){
+  const blank={id:'',name:'',country:'',paymentTerms:'',salesPerson:'',email:'',contactPerson:'',contactNumber:'',lastEditedBy:'',lastEditedAt:''};
+  const [f,setF]=useState({...blank});
+  const [editing,setEditing]=useState(null);
+  const [errs,setErrs]=useState({});
+  const [search,setSearch]=useState('');
+  const [archiveId,setArchiveId]=useState(null);
+  const set=(k,v)=>{setF(p=>({...p,[k]:v}));setErrs(e=>({...e,[k]:null}));};
+  const validate=()=>{
+    const e={};
+    if(!f.name.trim())e.name='Required';
+    else if(!editing&&parties.find(p=>p.name.toLowerCase()===f.name.toLowerCase()))e.name='Party already exists';
+    if(!f.country.trim())e.country='Required';
+    if(f.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email))e.email='Invalid email';
+    setErrs(e);return Object.keys(e).length===0;
+  };
+  const save=()=>{
+    if(!validate())return;
+    const prev=editing?parties.find(p=>p.id===editing):null;
+    const updated={...f,id:editing||ptyId(),lastEditedBy:currentUser?.name||'System',lastEditedAt:nowStr()};
+    saveParty(updated,prev||null);
+    setF({...blank});setEditing(null);setErrs({});
+  };
+  const filtered=parties.filter(p=>!search||(p.name+p.country+p.salesPerson).toLowerCase().includes(search.toLowerCase()));
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:18}} className="fade-in">
+      {archiveId&&<ConfirmDialog msg="Delete this party?" confirmLabel="Delete" confirmColor="#be123c" onYes={()=>{deleteParty(archiveId);setArchiveId(null);}} onNo={()=>setArchiveId(null)}/>}
+      <div><div style={{fontFamily:'Instrument Serif,serif',fontSize:22}}>Party Master</div><div style={{color:'#8b8580',fontSize:13}}>{parties.length} trading partners · all changes tracked</div></div>
+      <div style={{background:'#fff',border:'1.5px solid #e2ddd6',borderRadius:12,padding:18}}>
+        <div style={{fontFamily:'Instrument Serif,serif',fontSize:16,marginBottom:14}}>{editing?'Edit Party':'Add New Party'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+          {[['name','Party Name',true],['country','Country',true],['paymentTerms','Payment Terms'],['salesPerson','Sales Person'],['email','Email'],['contactPerson','Contact Person'],['contactNumber','Contact Number']].map(([k,lbl,req])=>(
+            <div key={k}>
+              <Label text={lbl} req={req}/>
+              {k==='paymentTerms'?<select value={f[k]} onChange={e=>set(k,e.target.value)}><option value="">Select…</option>{PAY_TERMS.map(t=><option key={t}>{t}</option>)}</select>:<input type={k==='email'?'email':'text'} value={f[k]} onChange={e=>set(k,e.target.value)} className={errs[k]?'err':''}/>}
+              <ErrMsg msg={errs[k]}/>
+            </div>
+          ))}
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button onClick={save} style={{background:'#1c1917',color:'#f7f5f0',padding:'8px 20px'}}>{editing?'Update':'Add Party'}</button>
+          {editing&&<button onClick={()=>{setF({...blank});setEditing(null);setErrs({});}} style={{background:'#f0ede6',color:'#3d3832',padding:'8px 15px',border:'1px solid #e2ddd6'}}>Cancel</button>}
+        </div>
+      </div>
+      <div style={{background:'#fff',border:'1px solid #e2ddd6',borderRadius:12,overflow:'hidden'}}>
+        <div style={{padding:'11px 14px',borderBottom:'1px solid #e2ddd6',display:'flex',gap:10}}>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search parties…" style={{maxWidth:280}}/>
+          <span style={{fontSize:12,color:'#8b8580',marginLeft:'auto',lineHeight:'38px'}}>{filtered.length} results</span>
+        </div>
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr style={{background:'#f7f5f0'}}>{['ID','Party Name','Country','Payment Terms','Sales Person','Email','Last Edited By','Actions'].map(h=><th key={h} style={{padding:'9px 11px',textAlign:'left',fontSize:11,fontWeight:600,color:'#6b6560',letterSpacing:.5,textTransform:'uppercase',borderBottom:'1px solid #e2ddd6',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {filtered.map((p,i)=>(
+                <tr key={p.id} style={{borderBottom:'1px solid #e8e3da',background:i%2?'#fdfcf9':'transparent'}}>
+                  <td style={{padding:'9px 11px'}}><code style={{fontSize:11,color:'#1e40af',fontFamily:'DM Mono,monospace'}}>{p.id}</code></td>
+                  <td style={{padding:'9px 11px',fontWeight:500,fontSize:13}}>{p.name}</td>
+                  <td style={{padding:'9px 11px',color:'#8b8580',fontSize:12}}>{p.country}</td>
+                  <td style={{padding:'9px 11px'}}><Pill label={p.paymentTerms||'—'} color="blue"/></td>
+                  <td style={{padding:'9px 11px',fontSize:12}}>{p.salesPerson||'—'}</td>
+                  <td style={{padding:'9px 11px',fontSize:12,color:'#1e40af'}}>{p.email||'—'}</td>
+                  <td style={{padding:'9px 11px'}}>
+                    {p.lastEditedBy?(
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <Avatar name={p.lastEditedBy} size={20}/>
+                        <div>
+                          <div style={{fontSize:12,fontWeight:500}}>{p.lastEditedBy}</div>
+                          <div style={{fontSize:10,color:'#a9a49e'}}>{p.lastEditedAt||''}</div>
+                        </div>
+                      </div>
+                    ):<span style={{fontSize:11,color:'#c8c3b8',fontStyle:'italic'}}>—</span>}
+                  </td>
+                  <td style={{padding:'9px 11px'}}>
+                    <div style={{display:'flex',gap:5}}>
+                      <button onClick={()=>{setF({...p});setEditing(p.id);}} style={{background:'#f0ede6',color:'#3d3832',padding:'4px 10px',border:'1px solid #e2ddd6',fontSize:12}}>Edit</button>
+                      <button onClick={()=>setArchiveId(p.id)} style={{background:'#fff1f2',color:'#be123c',padding:'4px 10px',border:'1px solid #fecaca',fontSize:12}}>Del</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length===0&&<tr><td colSpan={8} style={{padding:28,textAlign:'center',color:'#a9a49e',fontStyle:'italic'}}>No parties found</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── PRODUCT MASTER ──────────────────────────────────────────────────────── */
+function ProductMaster({products,saveProduct,deleteProduct,currentUser}){
+  const blank={id:'',manufacturer:'',productName:'',standardQty:'',purchaseRate:'',hsCode:'',batchNumber:'',expiryDate:'',lastEditedBy:'',lastEditedAt:''};
+  const [f,setF]=useState({...blank});
+  const [editing,setEditing]=useState(null);
+  const [errs,setErrs]=useState({});
+  const [search,setSearch]=useState('');
+  const [delId,setDelId]=useState(null);
+  const set=(k,v)=>{setF(p=>({...p,[k]:v}));setErrs(e=>({...e,[k]:null}));};
+  const validate=()=>{
+    const e={};
+    if(!f.productName.trim())e.productName='Required';
+    else if(!editing&&products.find(p=>p.productName.toLowerCase()===f.productName.toLowerCase()))e.productName='Already exists';
+    if(!f.manufacturer.trim())e.manufacturer='Required';
+    if(!f.hsCode.trim())e.hsCode='HS Code required for ADC clearance';
+    if(f.standardQty!==''&&isNaN(Number(f.standardQty)))e.standardQty='Must be a number';
+    if(f.purchaseRate!==''&&isNaN(Number(f.purchaseRate)))e.purchaseRate='Must be a number';
+    setErrs(e);return Object.keys(e).length===0;
+  };
+  const save=()=>{
+    if(!validate())return;
+    const prev=editing?products.find(p=>p.id===editing):null;
+    const s={...f,id:editing||prdId(),standardQty:Number(f.standardQty)||0,purchaseRate:Number(f.purchaseRate)||0,lastEditedBy:currentUser?.name||'System',lastEditedAt:nowStr()};
+    saveProduct(s,prev||null);
+    setF({...blank});setEditing(null);setErrs({});
+  };
+  const filtered=products.filter(p=>!search||(p.productName+p.manufacturer+p.hsCode).toLowerCase().includes(search.toLowerCase()));
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:18}} className="fade-in">
+      {delId&&<ConfirmDialog msg="Delete this product?" confirmLabel="Delete" confirmColor="#be123c" onYes={()=>{deleteProduct(delId);setDelId(null);}} onNo={()=>setDelId(null)}/>}
+      <div><div style={{fontFamily:'Instrument Serif,serif',fontSize:22}}>Product Master</div><div style={{color:'#8b8580',fontSize:13}}>{products.length} products · HS Code, Batch & Expiry tracked · all changes logged</div></div>
+      <div style={{background:'#fff',border:'1.5px solid #e2ddd6',borderRadius:12,padding:18}}>
+        <div style={{fontFamily:'Instrument Serif,serif',fontSize:16,marginBottom:14}}>{editing?'Edit Product':'Add New Product'}</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:12}}>
+          {[['productName','Product Name',true],['manufacturer','Manufacturer',true],['hsCode','HS Code',true],['standardQty','Standard Qty (Kg)'],['purchaseRate','Purchase Rate (₹/unit)']].map(([k,lbl,req])=>(
+            <div key={k}>
+              <Label text={lbl} req={req}/>
+              <input type="text" inputMode={['standardQty','purchaseRate'].includes(k)?'decimal':undefined} value={f[k]} onChange={e=>set(k,e.target.value)} className={errs[k]?'err':''}/>
+              <ErrMsg msg={errs[k]}/>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:10,padding:'10px 12px',background:'#eff6ff',border:'1px solid #bfdbfe',borderRadius:8,fontSize:12,color:'#1e40af'}}>
+          HS Code, Batch/Lot Number, and Expiry Date are mandatory for ADC (Drug Controller) clearances. These fields are captured per-order in the Order Tracker.
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:14}}>
+          <button onClick={save} style={{background:'#1c1917',color:'#f7f5f0',padding:'8px 20px'}}>{editing?'Update':'Add Product'}</button>
+          {editing&&<button onClick={()=>{setF({...blank});setEditing(null);setErrs({});}} style={{background:'#f0ede6',color:'#3d3832',padding:'8px 15px',border:'1px solid #e2ddd6'}}>Cancel</button>}
+        </div>
+      </div>
+      <div style={{background:'#fff',border:'1px solid #e2ddd6',borderRadius:12,overflow:'hidden'}}>
+        <div style={{padding:'11px 14px',borderBottom:'1px solid #e2ddd6'}}><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search products, HS code…" style={{maxWidth:300}}/></div>
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%',borderCollapse:'collapse'}}>
+            <thead><tr style={{background:'#f7f5f0'}}>{['ID','Product Name','Manufacturer','HS Code','Std Qty (Kg)','Rate (₹)','Last Edited By','Actions'].map(h=><th key={h} style={{padding:'9px 11px',textAlign:'left',fontSize:11,fontWeight:600,color:'#6b6560',letterSpacing:.5,textTransform:'uppercase',borderBottom:'1px solid #e2ddd6',whiteSpace:'nowrap'}}>{h}</th>)}</tr></thead>
+            <tbody>
+              {filtered.map((p,i)=>(
+                <tr key={p.id} style={{borderBottom:'1px solid #e8e3da',background:i%2?'#fdfcf9':'transparent'}}>
+                  <td style={{padding:'9px 11px'}}><code style={{fontSize:11,color:'#1e40af',fontFamily:'DM Mono,monospace'}}>{p.id}</code></td>
+                  <td style={{padding:'9px 11px',fontWeight:500}}>{p.productName}</td>
+                  <td style={{padding:'9px 11px',color:'#8b8580'}}>{p.manufacturer}</td>
+                  <td style={{padding:'9px 11px'}}><Pill label={p.hsCode||'Missing'} color={p.hsCode?'blue':'red'}/></td>
+                  <td style={{padding:'9px 11px',fontFamily:'DM Mono,monospace',fontSize:12}}>{Number(p.standardQty||0).toLocaleString('en-IN')}</td>
+                  <td style={{padding:'9px 11px',fontFamily:'DM Mono,monospace',fontSize:12}}>₹{Number(p.purchaseRate||0).toLocaleString('en-IN')}</td>
+                  <td style={{padding:'9px 11px'}}>
+                    {p.lastEditedBy?(
+                      <div style={{display:'flex',alignItems:'center',gap:6}}>
+                        <Avatar name={p.lastEditedBy} size={20}/>
+                        <div>
+                          <div style={{fontSize:12,fontWeight:500}}>{p.lastEditedBy}</div>
+                          <div style={{fontSize:10,color:'#a9a49e'}}>{p.lastEditedAt||''}</div>
+                        </div>
+                      </div>
+                    ):<span style={{fontSize:11,color:'#c8c3b8',fontStyle:'italic'}}>—</span>}
+                  </td>
+                  <td style={{padding:'9px 11px'}}>
+                    <div style={{display:'flex',gap:5}}>
+                      <button onClick={()=>{setF({...p,standardQty:String(p.standardQty),purchaseRate:String(p.purchaseRate)});setEditing(p.id);}} style={{background:'#f0ede6',color:'#3d3832',padding:'4px 10px',border:'1px solid #e2ddd6',fontSize:12}}>Edit</button>
+                      <button onClick={()=>setDelId(p.id)} style={{background:'#fff1f2',color:'#be123c',padding:'4px 10px',border:'1px solid #fecada',fontSize:12}}>Del</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length===0&&<tr><td colSpan={8} style={{padding:28,textAlign:'center',color:'#a9a49e',fontStyle:'italic'}}>No products found</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── LOGIN ───────────────────────────────────────────────────────────────── */
+function Login({onLogin}){
+  const [email,setEmail]=useState('');const[pass,setPass]=useState('');const[err,setErr]=useState('');const[loading,setLoading]=useState(false);
+  const submit=e=>{e.preventDefault();setErr('');setLoading(true);setTimeout(()=>{const u=DEMO_USERS.find(x=>x.email===email&&x.pass===pass);if(u)onLogin(u);else{setErr('Invalid email or password.');setLoading(false);}},500);};
+  return(
+    <div style={{minHeight:'100vh',background:'#f7f5f0',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
+      <div style={{width:'100%',maxWidth:400}}>
+        <div style={{textAlign:'center',marginBottom:32}}>
+          <div style={{fontFamily:'Instrument Serif,serif',fontSize:36,color:'#1c1917',lineHeight:1.1}}>Anton Pharma</div>
+          <div style={{color:'#8b8580',fontSize:14,marginTop:5}}>Supply Chain Management Portal</div>
+        </div>
+        <div style={{background:'#fff',border:'1.5px solid #e2ddd6',borderRadius:14,padding:30}}>
+          <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:14}}>
+            <div><Label text="Email Address"/><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@antonpharma.in" required/></div>
+            <div><Label text="Password"/><input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Password" required/></div>
+            {err&&<div style={{fontSize:12,color:'#dc2626',background:'#fff1f2',border:'1px solid #fecaca',borderRadius:7,padding:'8px 12px'}}>{err}</div>}
+            <button type="submit" disabled={loading} style={{background:'#1c1917',color:'#f7f5f0',padding:11,fontSize:14,marginTop:4,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
+              {loading&&<Spinner/>}{loading?'Signing in…':'Sign In'}
+            </button>
+          </form>
+        </div>
+        <div style={{marginTop:16,background:'#fff',border:'1px solid #e2ddd6',borderRadius:12,padding:14}}>
+          <div style={{fontSize:11,fontWeight:600,color:'#6b6560',textTransform:'uppercase',letterSpacing:.5,marginBottom:8}}>Demo Accounts</div>
+          {DEMO_USERS.map(u=>(
+            <div key={u.id} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'5px 0',borderBottom:'1px solid #e8e3da',fontSize:12}}>
+              <div><span style={{fontWeight:500}}>{u.name}</span><span style={{color:'#8b8580',marginLeft:6}}>({u.role})</span></div>
+              <button onClick={()=>{setEmail(u.email);setPass(u.pass);}} style={{background:'#f0ede6',color:'#57524d',padding:'3px 9px',border:'1px solid #e2ddd6',fontSize:11}}>Use</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── APP ─────────────────────────────────────────────────────────────────── */
+const NAV_ICONS={
+  dashboard:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
+  orders:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>,
+  parties:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>,
+  products:<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>,
+};
+const ROLE_STYLE={Admin:{bg:'#dbeafe',tx:'#1e40af'},Sales:{bg:'#dcfce7',tx:'#15803d'},Logistics:{bg:'#fef3c7',tx:'#92400e'},Finance:{bg:'#ede9fe',tx:'#5b21b6'}};
+
+/* ── AUDIT LOG COMPONENT ─────────────────────────────────────────────────── */
+const AUDIT_MODULE_COLOR={Orders:{bg:'#eff6ff',tx:'#1e40af',dot:'#3b82f6'},Parties:{bg:'#f0fdf4',tx:'#14532d',dot:'#22c55e'},Products:{bg:'#fdf4ff',tx:'#6b21a8',dot:'#a855f7'}};
+function AuditLog({entries}){
+  const [search,setSearch]=useState('');
+  const [filterModule,setFilterModule]=useState('');
+  const [filterUser,setFilterUser]=useState('');
+  const filtered=entries.filter(e=>{
+    const q=search.toLowerCase();
+    const matchQ=!q||(e.user+e.action+e.module+e.ref).toLowerCase().includes(q);
+    const matchM=!filterModule||e.module===filterModule;
+    const matchU=!filterUser||e.user===filterUser;
+    return matchQ&&matchM&&matchU;
+  });
+  const users=[...new Set(entries.map(e=>e.user))];
+  return(
+    <div style={{display:'flex',flexDirection:'column',gap:18}} className="fade-in">
+      <div>
+        <div style={{fontFamily:'Instrument Serif,serif',fontSize:22}}>Audit Log</div>
+        <div style={{color:'#8b8580',fontSize:13}}>{entries.length} changes recorded across all modules</div>
+      </div>
+      {/* filters */}
+      <div style={{display:'flex',gap:10,flexWrap:'wrap',alignItems:'center'}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search by user, action, reference…" style={{maxWidth:300}}/>
+        <select value={filterModule} onChange={e=>setFilterModule(e.target.value)} style={{width:140}}>
+          <option value="">All Modules</option>
+          <option>Orders</option><option>Parties</option><option>Products</option>
+        </select>
+        <select value={filterUser} onChange={e=>setFilterUser(e.target.value)} style={{width:160}}>
+          <option value="">All Users</option>
+          {users.map(u=><option key={u}>{u}</option>)}
+        </select>
+        {(search||filterModule||filterUser)&&<button onClick={()=>{setSearch('');setFilterModule('');setFilterUser('');}} style={{background:'#fff1f2',color:'#be123c',border:'1px solid #fecaca',padding:'6px 12px',fontSize:12}}>Clear</button>}
+        <span style={{marginLeft:'auto',fontSize:12,color:'#a9a49e'}}>{filtered.length} entries</span>
+      </div>
+      {/* log table */}
+      <div style={{background:'#fff',border:'1px solid #e2ddd6',borderRadius:12,overflow:'hidden'}}>
+        {filtered.length===0?(
+          <div style={{padding:40,textAlign:'center',color:'#a9a49e',fontStyle:'italic'}}>No audit entries match your filters.</div>
+        ):(
+          <div style={{overflowX:'auto'}}>
+            <table style={{width:'100%',borderCollapse:'collapse'}}>
+              <thead><tr style={{background:'#f7f5f0'}}>
+                {['Timestamp','User','Module','Reference','Action','Before → After'].map(h=>(
+                  <th key={h} style={{padding:'9px 12px',textAlign:'left',fontSize:11,fontWeight:600,color:'#6b6560',letterSpacing:.5,textTransform:'uppercase',borderBottom:'1px solid #e2ddd6',whiteSpace:'nowrap'}}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {filtered.map((e,i)=>{
+                  const mc=AUDIT_MODULE_COLOR[e.module]||{bg:'#f0ede6',tx:'#57524d',dot:'#c8c3b8'};
+                  return(
+                    <tr key={i} style={{borderBottom:'1px solid #e8e3da',background:i%2?'#fdfcf9':'transparent'}}>
+                      <td style={{padding:'9px 12px',fontFamily:'DM Mono,monospace',fontSize:11,color:'#8b8580',whiteSpace:'nowrap'}}>{e.at}</td>
+                      <td style={{padding:'9px 12px'}}>
+                        <div style={{display:'flex',alignItems:'center',gap:7}}>
+                          <Avatar name={e.user} size={24}/>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:500}}>{e.user}</div>
+                            <div style={{fontSize:10,color:'#a9a49e'}}>{e.role||''}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td style={{padding:'9px 12px'}}>
+                        <span style={{display:'inline-flex',alignItems:'center',gap:5,padding:'2px 9px',borderRadius:20,fontSize:11,fontWeight:500,background:mc.bg,color:mc.tx}}>
+                          <span style={{width:5,height:5,borderRadius:'50%',background:mc.dot,display:'inline-block'}}/>
+                          {e.module}
+                        </span>
+                      </td>
+                      <td style={{padding:'9px 12px'}}><code style={{fontSize:11,color:'#1e40af',fontFamily:'DM Mono,monospace'}}>{e.ref}</code></td>
+                      <td style={{padding:'9px 12px',fontSize:13,color:'#3d3832'}}>{e.action}</td>
+                      <td style={{padding:'9px 12px',fontSize:12,color:'#6b6560',maxWidth:260}}>
+                        {e.diff?(
+                          <div style={{display:'flex',flexDirection:'column',gap:3}}>
+                            {e.diff.map((d,j)=>(
+                              <div key={j} style={{display:'flex',gap:6,alignItems:'flex-start',flexWrap:'wrap'}}>
+                                <span style={{fontWeight:600,color:'#57524d',whiteSpace:'nowrap'}}>{d.field}:</span>
+                                <span style={{color:'#be123c',textDecoration:'line-through',maxWidth:90,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.from||'—'}</span>
+                                <span style={{color:'#a9a49e'}}>→</span>
+                                <span style={{color:'#15803d',maxWidth:90,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.to||'—'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ):<span style={{color:'#a9a49e',fontStyle:'italic'}}>—</span>}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ── DIFF HELPER ─────────────────────────────────────────────────────────── */
+const TRACKED_ORDER_FIELDS=['status','partyId','productId','freightType','country','paymentTerms','quantity','unit','totalValueUSD','totalValueINR','usdRate','invoiceNumber','paymentStatus','paymentDate','expectedDelivery','actualDelivery','awbDate','awbNumber','remarks','paymentRemarks','manufacturer','batchLotNumber'];
+const TRACKED_PARTY_FIELDS=['name','country','paymentTerms','salesPerson','email','contactPerson','contactNumber'];
+const TRACKED_PRODUCT_FIELDS=['productName','manufacturer','hsCode','standardQty','purchaseRate'];
+function diffFields(prev,next,fields){
+  return fields.reduce((acc,k)=>{
+    const a=String(prev[k]??''),b=String(next[k]??'');
+    if(a!==b)acc.push({field:k,from:a,to:b});
+    return acc;
+  },[]);
+}
+
+/* ── APP ─────────────────────────────────────────────────────────────────── */
+function App(){
+  const [user,setUser]=useState(null);
+  const [tab,setTab]=useState('dashboard');
+  const [parties,setParties]=useState(SEED_PARTIES);
+  const [products,setProducts]=useState(SEED_PRODUCTS);
+  const [orders,setOrders]=useState(SEED_ORDERS);
+  const [globalUsdRate,setGlobalUsdRate]=useState(83.5);
+  const [globalUsdDate,setGlobalUsdDate]=useState('2024-11-01');
+  const [editFromDash,setEditFromDash]=useState(null);
+  // Global audit log
+  const [auditLog,setAuditLog]=useState([
+    {at:'2024-11-05 14:30',user:'Rohan Shah',role:'Admin',module:'Orders',ref:'ORD-001',action:'Status changed',diff:[{field:'status',from:'Inward Transit',to:'Inward Transit'}]},
+    {at:'2024-11-18 16:45',user:'Amir Khan',role:'Logistics',module:'Orders',ref:'ORD-002',action:'Status changed',diff:[{field:'status',from:'Pending Shipment',to:'At Warehouse'},{field:'actualDelivery',from:'',to:'2024-11-18'}]},
+    {at:'2024-10-12 13:20',user:'Priya Nair',role:'Sales',module:'Orders',ref:'ORD-004',action:'Status changed',diff:[{field:'status',from:'Dispatch at Port',to:'Cleared & Accepted'},{field:'actualDelivery',from:'',to:'2024-10-12'}]},
+    {at:'2024-11-08 10:22',user:'Amir Khan',role:'Logistics',module:'Orders',ref:'ORD-003',action:'Order created',diff:null},
+    {at:'2024-09-02 09:00',user:'Rohan Shah',role:'Admin',module:'Orders',ref:'ORD-004',action:'Order created',diff:null},
+  ]);
+
+  const addAudit=(entry)=>setAuditLog(prev=>[entry,...prev]);
+
+  const setGlobalUsd=(rate,date)=>{setGlobalUsdRate(rate);setGlobalUsdDate(date);};
+  const handleEditFromDash=(order)=>{setEditFromDash(order);setTab('orders');};
+
+  // Wrapped setters that auto-log changes
+  const saveOrder=(updatedOrder,prevOrder)=>{
+    const isNew=!prevOrder;
+    const diff=isNew?null:diffFields(prevOrder,updatedOrder,TRACKED_ORDER_FIELDS);
+    addAudit({at:nowStr(),user:user.name,role:user.role,module:'Orders',ref:updatedOrder.id,action:isNew?'Order created':`Order updated`,diff:diff&&diff.length?diff:null});
+    setOrders(prev=>isNew?[...prev,updatedOrder]:prev.map(o=>o.id===updatedOrder.id?updatedOrder:o));
+  };
+
+  const saveParty=(updatedParty,prevParty)=>{
+    const isNew=!prevParty;
+    const diff=isNew?null:diffFields(prevParty,updatedParty,TRACKED_PARTY_FIELDS);
+    addAudit({at:nowStr(),user:user.name,role:user.role,module:'Parties',ref:updatedParty.name,action:isNew?'Party created':'Party updated',diff:diff&&diff.length?diff:null});
+    setParties(prev=>isNew?[...prev,updatedParty]:prev.map(p=>p.id===updatedParty.id?updatedParty:p));
+  };
+
+  const deleteParty=(id)=>{
+    const p=parties.find(x=>x.id===id);
+    addAudit({at:nowStr(),user:user.name,role:user.role,module:'Parties',ref:p?.name||id,action:'Party deleted',diff:null});
+    setParties(prev=>prev.filter(p=>p.id!==id));
+  };
+
+  const saveProduct=(updatedProduct,prevProduct)=>{
+    const isNew=!prevProduct;
+    const diff=isNew?null:diffFields(prevProduct,updatedProduct,TRACKED_PRODUCT_FIELDS);
+    addAudit({at:nowStr(),user:user.name,role:user.role,module:'Products',ref:updatedProduct.productName,action:isNew?'Product created':'Product updated',diff:diff&&diff.length?diff:null});
+    setProducts(prev=>isNew?[...prev,updatedProduct]:prev.map(p=>p.id===updatedProduct.id?updatedProduct:p));
+  };
+
+  const deleteProduct=(id)=>{
+    const p=products.find(x=>x.id===id);
+    addAudit({at:nowStr(),user:user.name,role:user.role,module:'Products',ref:p?.productName||id,action:'Product deleted',diff:null});
+    setProducts(prev=>prev.filter(p=>p.id!==id));
+  };
+
+  if(!user)return<Login onLogin={setUser}/>;
+
+  const navItems=[
+    {id:'dashboard',label:'Dashboard'},
+    {id:'orders',label:'Orders',count:orders.filter(o=>!o.archived).length},
+    {id:'parties',label:'Parties'},
+    {id:'products',label:'Products'},
+    {id:'auditlog',label:'Audit Log',count:auditLog.length},
+  ];
+  const rs=ROLE_STYLE[user.role]||ROLE_STYLE.Admin;
+
+  const auditIcon=<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>;
+
+  return(
+    <div style={{display:'flex',height:'100vh',overflow:'hidden',background:'#f7f5f0'}}>
+      <aside style={{width:210,background:'#fff',borderRight:'1.5px solid #e2ddd6',display:'flex',flexDirection:'column',flexShrink:0}}>
+        <div style={{padding:'18px 16px 14px',borderBottom:'1px solid #e2ddd6'}}>
+          <div style={{fontFamily:'Instrument Serif,serif',fontSize:17,lineHeight:1.2}}>Anton Pharma</div>
+          <div style={{fontSize:11,color:'#a9a49e',marginTop:2}}>Supply Chain Portal</div>
+        </div>
+        <nav style={{flex:1,padding:'10px 8px',display:'flex',flexDirection:'column',gap:1,overflowY:'auto'}}>
+          {navItems.map(n=>(
+            <button key={n.id} onClick={()=>{setTab(n.id);if(n.id!=='orders')setEditFromDash(null);}} style={{display:'flex',alignItems:'center',gap:9,padding:'9px 10px',borderRadius:7,background:tab===n.id?'#f0ede6':'transparent',color:tab===n.id?'#1c1917':'#8b8580',textAlign:'left',border:`1px solid ${tab===n.id?'#e2ddd6':'transparent'}`,fontWeight:tab===n.id?500:400,fontSize:13}}>
+              <span style={{color:tab===n.id?'#57524d':'#c8c3b8'}}>{n.id==='auditlog'?auditIcon:NAV_ICONS[n.id]}</span>
+              {n.label}
+              {n.count!=null&&<span style={{marginLeft:'auto',background:tab===n.id?'#c8c3b8':'#e8e3da',color:'#57524d',borderRadius:10,padding:'1px 6px',fontSize:10,fontWeight:600}}>{n.count}</span>}
+            </button>
+          ))}
+        </nav>
+        <div style={{padding:'12px 14px',borderTop:'1px solid #e2ddd6'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:9}}>
+            <Avatar name={user.name} size={32}/>
+            <div style={{minWidth:0}}>
+              <div style={{fontSize:13,fontWeight:500,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.name}</div>
+              <div style={{fontSize:10,color:'#a9a49e',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{user.email}</div>
+            </div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <span style={{fontSize:11,fontWeight:600,padding:'2px 8px',borderRadius:10,background:rs.bg,color:rs.tx}}>{user.role}</span>
+            <button onClick={()=>setUser(null)} style={{background:'transparent',color:'#8b8580',fontSize:12,padding:'3px 8px',border:'1px solid #e2ddd6',borderRadius:7}}>Sign out</button>
+          </div>
+        </div>
+      </aside>
+      <main style={{flex:1,overflow:'auto',padding:'22px 26px'}}>
+        {tab==='dashboard'&&<Dashboard orders={orders} parties={parties} products={products} onEditOrder={handleEditFromDash}/>}
+        {tab==='orders'&&<OrderTracker orders={orders} setOrders={(updOrders)=>setOrders(updOrders)} saveOrder={saveOrder} parties={parties} products={products} currentUser={user} globalUsdRate={globalUsdRate} globalUsdDate={globalUsdDate} setGlobalUsd={setGlobalUsd} initialEdit={editFromDash}/>}
+        {tab==='parties'&&<PartyMaster parties={parties} saveParty={saveParty} deleteParty={deleteParty} currentUser={user}/>}
+        {tab==='products'&&<ProductMaster products={products} saveProduct={saveProduct} deleteProduct={deleteProduct} currentUser={user}/>}
+        {tab==='auditlog'&&<AuditLog entries={auditLog}/>}
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
