@@ -295,6 +295,63 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
 .pdf-btn.teal-btn{color:var(--teal);border-color:rgba(46,196,182,0.4);background:rgba(46,196,182,0.08)}
 .pdf-btn.teal-btn:hover{background:rgba(46,196,182,0.18);border-color:var(--teal)}
 
+
+/* ─── PROJECTS ─── */
+.proj-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.proj-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
+  overflow:hidden;transition:all .25s;display:flex;flex-direction:column;
+}
+.proj-card:hover{border-color:rgba(201,168,76,0.4);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
+.proj-preview{
+  height:180px;background:var(--bg3);
+  display:flex;align-items:center;justify-content:center;
+  border-bottom:1px solid var(--border);position:relative;overflow:hidden;
+}
+.proj-preview iframe{
+  width:160%;height:160%;transform:scale(0.625);transform-origin:top left;
+  pointer-events:none;border:none;
+}
+.proj-preview-overlay{
+  position:absolute;inset:0;background:transparent;
+  display:flex;align-items:flex-end;padding:12px;
+}
+.proj-tag{
+  font-family:var(--mono);font-size:0.64rem;letter-spacing:0.1em;
+  text-transform:uppercase;padding:4px 10px;border-radius:999px;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);color:var(--text2);
+  border:1px solid var(--border2);
+}
+.proj-body{padding:22px 24px;flex:1;display:flex;flex-direction:column}
+.proj-num{font-family:var(--mono);font-size:0.68rem;color:var(--gold);margin-bottom:8px;letter-spacing:0.1em}
+.proj-title{font-size:1rem;font-weight:600;margin-bottom:8px;line-height:1.4}
+.proj-desc{font-size:0.86rem;color:var(--text2);line-height:1.7;margin-bottom:16px;flex:1}
+.proj-tech{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.proj-tech span{
+  font-size:0.74rem;padding:4px 10px;border-radius:6px;
+  border:1px solid var(--border);color:var(--text3);background:var(--bg3);
+}
+.proj-links{display:flex;gap:10px;flex-wrap:wrap}
+.proj-link{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 16px;border-radius:8px;font-size:0.82rem;font-weight:500;
+  text-decoration:none;transition:all .2s;
+}
+.proj-link.primary{background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.3)}
+.proj-link.primary:hover{background:rgba(201,168,76,0.22);border-color:var(--gold)}
+.proj-link.secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.proj-link.secondary:hover{border-color:var(--border2);color:var(--text)}
+.proj-context{
+  background:linear-gradient(135deg,rgba(201,168,76,0.06),rgba(46,196,182,0.04));
+  border:1px solid rgba(201,168,76,0.15);border-radius:var(--rad);
+  padding:22px 26px;margin-bottom:28px;
+  display:flex;align-items:flex-start;gap:14px;
+}
+.proj-context i{color:var(--gold);font-size:1.1rem;margin-top:2px;flex-shrink:0}
+.proj-context p{font-size:0.9rem;color:var(--text2);line-height:1.75}
+.proj-context strong{color:var(--text)}
+@media(max-width:900px){.proj-grid{grid-template-columns:1fr}}
+
 /* ─── MOBILE ─── */
 @media(max-width:900px){
   .hero{grid-template-columns:1fr}
@@ -341,6 +398,7 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       <a href="#" onclick="showTab('research',this)"><i class="fa fa-microscope"></i>Research</a>
       <a href="#" onclick="showTab('certifications',this)"><i class="fa fa-certificate"></i>Certifications</a>
       <a href="#" onclick="showTab('skills',this)"><i class="fa fa-code"></i>Skills</a>
+      <a href="#" onclick="showTab('projects',this)"><i class="fa fa-code"></i>Projects</a>
       <a href="#" onclick="showTab('contact',this)"><i class="fa fa-paper-plane"></i>Contact</a>
     </nav>
 
@@ -361,6 +419,7 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       <button class="tab-btn" onclick="showTab('research',this)" data-tab="research"><i class="fa fa-microscope"></i>Research</button>
       <button class="tab-btn" onclick="showTab('certifications',this)" data-tab="certifications"><i class="fa fa-certificate"></i>Certifications</button>
       <button class="tab-btn" onclick="showTab('skills',this)" data-tab="skills"><i class="fa fa-star"></i>Skills</button>
+      <button class="tab-btn" onclick="showTab('projects',this)" data-tab="projects"><i class="fa fa-code"></i>Projects</button>
       <button class="tab-btn" onclick="showTab('contact',this)" data-tab="contact"><i class="fa fa-paper-plane"></i>Contact</button>
     </nav>
 
@@ -397,6 +456,7 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:8px">
         <a class="pdf-btn" href="https://abhishekayyangar25m-bot.github.io/portfolio/FDI_FPI_Project.pdf" target="_blank"><i class="fa fa-file-pdf"></i> B.Com Project — FDI &amp; FPI Study (96%)</a>
         <a class="pdf-btn teal-btn" href="https://abhishekayyangar25m-bot.github.io/portfolio/Cashless_Economy_Research_Paper.pdf" target="_blank"><i class="fa fa-file-pdf"></i> Research Paper — Cashless Economy</a>
+        <a class="pdf-btn" href="#" onclick="showTab('projects',document.querySelector('[data-tab=projects]'));return false;" style="border-color:rgba(79,142,247,0.4);color:#7ab0fb;background:rgba(79,142,247,0.08)"><i class="fa fa-code"></i> View Live Projects</a>
       </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:32px;margin-top:8px">
         <p style="font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:20px;font-family:var(--mono)">Core Competencies</p>
@@ -703,6 +763,101 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
         <div class="extracurr-item">
           <i class="fa fa-film"></i>
           <span><strong style="color:var(--text)">SOCH</strong> — Short film project with over 1,500 viewers, 2017</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJECTS -->
+    <div id="tab-projects" class="panel">
+      <p class="sec-label">Live Prototypes</p>
+      <h2 class="sec-title">Internship Projects</h2>
+
+      <div class="proj-context">
+        <i class="fa fa-flask"></i>
+        <p>
+          These are <strong>functional front-end prototypes</strong> built during my internship at
+          <strong>Anton Global Pharmaceuticals Pvt. Ltd.</strong> Both tools were designed to solve real
+          operational problems — automating manual workflows and redesigning the company's internal
+          finance and supply chain systems. Built using <strong>HTML, CSS &amp; JavaScript</strong>,
+          co-developed with AI assistance (Claude AI).
+        </p>
+      </div>
+
+      <div class="proj-grid">
+
+        <!-- Project 1: Supply Chain Portal -->
+        <div class="proj-card">
+          <div class="proj-preview">
+            <iframe src="https://abhishekayyangar25m-bot.github.io/portfolio/supply-chain-portal.html" title="Supply Chain Portal Preview" loading="lazy" tabindex="-1" aria-hidden="true"></iframe>
+            <div class="proj-preview-overlay">
+              <span class="proj-tag">Supply Chain · Pharma</span>
+            </div>
+          </div>
+          <div class="proj-body">
+            <div class="proj-num">PROJECT — 01</div>
+            <div class="proj-title">Anton Pharma — Supply Chain Management Portal</div>
+            <div class="proj-desc">
+              A full-featured internal supply chain portal redesigned from scratch. Features include order tracking, 
+              party master &amp; product master management, activity logs, export CSV, 
+              value calculation, and a real-time supply chain overview dashboard with order-status analytics.
+            </div>
+            <div class="proj-tech">
+              <span>HTML / CSS</span><span>JavaScript</span><span>Supply Chain</span>
+              <span>MIS Redesign</span><span>Dashboard</span><span>Claude AI</span>
+            </div>
+            <div class="proj-links">
+              <a class="proj-link primary" href="https://abhishekayyangar25m-bot.github.io/portfolio/supply-chain-portal.html" target="_blank" rel="noopener">
+                <i class="fa fa-external-link-alt"></i> Open Live Demo
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project 2: Finance Portal -->
+        <div class="proj-card">
+          <div class="proj-preview">
+            <iframe src="https://abhishekayyangar25m-bot.github.io/portfolio/finance-portal.html" title="Finance Portal Preview" loading="lazy" tabindex="-1" aria-hidden="true"></iframe>
+            <div class="proj-preview-overlay">
+              <span class="proj-tag">Finance · Export Operations</span>
+            </div>
+          </div>
+          <div class="proj-body">
+            <div class="proj-num">PROJECT — 02</div>
+            <div class="proj-title">Anton Global — Commercial Invoice &amp; Finance Portal</div>
+            <div class="proj-desc">
+              An integrated finance and export operations portal featuring a commercial invoice generator, 
+              SCOMET &amp; non-hazardous goods declarations, packing list automation, client master database, 
+              financial overview, and document management — replacing a fully manual invoicing workflow.
+            </div>
+            <div class="proj-tech">
+              <span>HTML / CSS</span><span>JavaScript</span><span>FinTech</span>
+              <span>Invoice Automation</span><span>Export Ops</span><span>Claude AI</span>
+            </div>
+            <div class="proj-links">
+              <a class="proj-link primary" href="https://abhishekayyangar25m-bot.github.io/portfolio/finance-portal.html" target="_blank" rel="noopener">
+                <i class="fa fa-external-link-alt"></i> Open Live Demo
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:24px;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px">
+        <p style="font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;font-family:var(--mono)">Impact at Anton Global</p>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
+            <div style="font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--gold)">100%</div>
+            <div style="font-size:0.78rem;color:var(--text3);margin-top:4px">Manual Invoice Process Automated</div>
+          </div>
+          <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
+            <div style="font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--teal)">3</div>
+            <div style="font-size:0.78rem;color:var(--text3);margin-top:4px">International Markets Managed (DR, Brazil, KSA)</div>
+          </div>
+          <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
+            <div style="font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--blue)">2</div>
+            <div style="font-size:0.78rem;color:var(--text3);margin-top:4px">Full Portals Designed &amp; Deployed</div>
+          </div>
         </div>
       </div>
     </div>
