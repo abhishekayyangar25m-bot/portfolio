@@ -110,7 +110,7 @@ html,body{height:100%;font-family:Arial,sans-serif;background:#f5f0f0;color:#111
   <div class="ni" id="nav-execreport" onclick="nav('execreport',this)"><span>📋</span> Executive Report</div>
   <div class="sb-sec">Settings</div>
   <div class="ni" id="nav-settings" onclick="nav('settings',this)"><span>⚙️</span> Settings &amp; Tally</div>
-  <div class="sb-ft">Anton Global Pharmaceuticals Pvt Ltd<br>GSTIN: 27AAKCA4867J1ZD</div>
+  <div class="sb-ft">Anton Global Pharmaceuticals Pvt Ltd<br>GSTIN: XX-XXXXXXXXX-XXX</div>
 </div>
 <!-- MAIN -->
 <div class="main">
@@ -783,8 +783,8 @@ html,body{height:100%;font-family:Arial,sans-serif;background:#f5f0f0;color:#111
           <option value="OD">OD</option>
         </select>
       </div>
-      <div class="f"><label>SWIFT / BIC code</label><input id="bank-swift" placeholder="e.g. HDFCINBBXXX"/></div>
-      <div class="f"><label>IFSC code</label><input id="bank-ifsc" placeholder="e.g. HDFC0001204"/></div>
+      <div class="f"><label>SWIFT / BIC code</label><input id="bank-swift" placeholder="e.g. XXXXXXXX"/></div>
+      <div class="f"><label>IFSC code</label><input id="bank-ifsc" placeholder="e.g. XXXXXXXX"/></div>
       <div class="f" style="grid-column:span 2"><label>Branch address</label><input id="bank-branch" placeholder="Branch full address"/></div>
     </div>
   </div>
@@ -1490,7 +1490,7 @@ html,body{height:100%;font-family:Arial,sans-serif;background:#f5f0f0;color:#111
     <div class="ct">Portal settings</div>
     <div class="g2">
       <div class="f"><label>Company name</label><input id="set-company" value="Anton Global Pharmaceuticals Pvt Ltd"/></div>
-      <div class="f"><label>GSTIN</label><input id="set-gstin" value="27AAYCA6373P1ZJ"/></div>
+      <div class="f"><label>GSTIN</label><input id="set-gstin" value="XX-XXXXXXXXX-XXX"/></div>
       <div class="f"><label>Financial year</label>
         <select id="set-fy"><option>2025-26</option><option>2024-25</option><option>2023-24</option></select>
       </div>
@@ -1536,11 +1536,11 @@ const EXPORTER_BANK = {
   default: {
     accName:  'Anton Global Pharmaceuticals Pvt Ltd',
     bankName: 'HDFC Bank Ltd',
-    accNum:   '50200099926293',
+    accNum:   'XXXXXXXXXXXX',
     accType:  'USD',
-    swift:    'HDFCINBBXXX',
-    ifsc:     'HDFC0001204',
-    branch:   'Sahar Plaza, J.B Nagar Andheri Kurla Road, Andheri East, Mumbai - 400059'
+    swift:    'XXXXXXXX',
+    ifsc:     'XXXXXXXX',
+    branch:   '[Branch Address Redacted]ad, Andheri East, Mumbai - 400059'
   }
 };
 
@@ -1995,7 +1995,7 @@ async function genADC(id){
   ws_data.push(['Port of Loading', inv.portLoad||'NHAVA SHEVA-MUMBAI', '', 'ADC Entry No', '']);
   ws_data.push(['', '', '', 'Shipping Bill No & Date', '']);
   ws_data.push(['', '', '', 'IEC Number', 'AAYCA6373P']);
-  ws_data.push(['', '', '', 'Name & Address of Exporter :', 'Anton Global Pharmaceuticals Pvt Ltd, 306, 3rd Floor, Centre Point, J B Nagar, Adjacent to Chakala Metro Station, Andheri East, Mumbai - 400059']);
+  ws_data.push(['', '', '', 'Name & Address of Exporter :', 'Anton Global Pharmaceuticals Pvt Ltd, ### Company Address, [Redacted]nt to Chakala Metro Station, Andheri East, Mumbai - 400059']);
   ws_data.push(['', '', '', 'Name & Address of Consignee:', (inv.consName||'')+(inv.consAddr?', '+inv.consAddr:'')]);
   ws_data.push(['']);
 
@@ -2175,7 +2175,7 @@ function genNonHaz(id){
       ANTON GLOBAL PHARMACEUTICALS PVT LTD<br>
       306, 3rd Floor, Centre Point, J B Nagar,<br>
       Adjacent to Chakala Metro Station, Andheri East, Mumbai – 400059<br>
-      GSTIN: 27AAYCA6373P1ZJ
+      GSTIN: XX-XXXXXXXXX-XXX
     </td>
   </tr>
 </table>
@@ -2368,7 +2368,7 @@ function buildPrint(inv){
           <b style="font-size:8.5pt">Anton Global Pharmaceuticals Pvt Ltd</b><br>
           306, 3rd Floor, Centre Point, J B Nagar,<br>
           Adjacent to Chakala Metro Station, Andheri East, Mumbai. MAHARASHTRA - 400059. INDIA<br>
-          <b>GSTIN:</b> ${esc(inv.expGst||'27AAYCA6373P1ZJ')} &nbsp; <b>CIN:</b> ${esc(inv.expCin||'U82990MH2023PTC02162')}
+          <b>GSTIN:</b> ${esc(inv.expGst||'XX-XXXXXXXXX-XXX')} &nbsp; <b>CIN:</b> ${esc(inv.expCin||'U82990MH2023PTC02162')}
         </td>
         <td style="border:0.5px solid #aaa;padding:4px 6px;width:50%;vertical-align:top">
           <table style="width:100%;border-collapse:collapse;font-size:7.5pt">
@@ -2468,8 +2468,8 @@ function buildPrint(inv){
         <td style="border:0.5px solid #aaa;padding:4px 6px;width:62%;vertical-align:top">
           <div style="margin-bottom:4px">Please send us your payment/s on the below given Bank details:</div>
           <div><b>ACCOUNT NAME:</b> ${esc(inv.bankAccName||'Anton Global Pharmaceuticals Pvt Ltd')}</div>
-          <div><b>BANK:</b> ${esc(inv.bankBankName||'HDFC Bank Ltd')} &nbsp; <b>A/C NO:</b> ${esc(inv.bankAccNum||'50200099926293')} &nbsp; <b>SWIFT:</b> ${esc(inv.bankSwift||'HDFCINBBXXX')}</div>
-          <div><b>TYPE:</b> ${esc(inv.bankAccType||'USD')} &nbsp; <b>IFSC:</b> ${esc(inv.bankIfsc||'HDFC0001204')} &nbsp; <b>BRANCH:</b> ${esc(inv.bankBranch||'Sahar Plaza, J.B Nagar, Andheri East, Mumbai-400059')}</div>
+          <div><b>BANK:</b> ${esc(inv.bankBankName||'HDFC Bank Ltd')} &nbsp; <b>A/C NO:</b> ${esc(inv.bankAccNum||'XXXXXXXXXXXX')} &nbsp; <b>SWIFT:</b> ${esc(inv.bankSwift||'XXXXXXXX')}</div>
+          <div><b>TYPE:</b> ${esc(inv.bankAccType||'USD')} &nbsp; <b>IFSC:</b> ${esc(inv.bankIfsc||'XXXXXXXX')} &nbsp; <b>BRANCH:</b> ${esc(inv.bankBranch||'Sahar Plaza, J.B Nagar, Andheri East, Mumbai-400059')}</div>
         </td>
         <td style="border:0.5px solid #aaa;padding:4px 6px;width:38%;text-align:center;vertical-align:bottom" rowspan="2">
           ${inv.sigImage?`<img src="${inv.sigImage}" style="max-height:42px;max-width:130px;display:block;margin:0 auto 3px" alt="Signature"/>`:'<div style="height:34px"></div>'}
@@ -3564,7 +3564,7 @@ function buildPackingListHTML(inv){
       <div>
         <div style="font-size:10pt;font-weight:700;letter-spacing:0.3px">ANTON GLOBAL PHARMACEUTICALS PVT LTD</div>
         <div style="font-size:7.5pt;color:#444;margin-top:2px">306, 3rd Floor, Centre Point, J B Nagar, Andheri East, Mumbai - 400059. INDIA</div>
-        <div style="font-size:7.5pt;color:#444">GSTIN: 27AAKCA4867J1ZD &nbsp;|&nbsp; CIN: U82990MH2023PTC402162</div>
+        <div style="font-size:7.5pt;color:#444">GSTIN: XX-XXXXXXXXX-XXX &nbsp;|&nbsp; CIN: U82990MH2023PTC402162</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:13pt;font-weight:700;letter-spacing:1px">PACKING LIST</div>
