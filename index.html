@@ -34,137 +34,51 @@ html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
 button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
-
-/* ─── HERO STRIP ─── */
-.hero{
-  display:grid;grid-template-columns:260px 1fr;min-height:100vh;
-}
-.hero-left{
-  background:var(--bg2);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;align-items:center;
-  padding:56px 28px 40px;
-  position:sticky;top:0;height:100vh;overflow-y:auto;
-}
+.hero{display:grid;grid-template-columns:260px 1fr;min-height:100vh;}
+.hero-left{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:56px 28px 40px;position:sticky;top:0;height:100vh;overflow-y:auto;}
 .avatar-wrap{position:relative;margin-bottom:28px}
-.avatar{
-  width:110px;height:110px;border-radius:50%;
-  background:linear-gradient(145deg,#c9a84c,#8b5e1a);
-  display:flex;align-items:center;justify-content:center;
-  font-family:var(--serif);font-size:2.4rem;font-weight:700;color:#fff;
-  box-shadow:0 0 0 4px var(--bg2),0 0 0 6px rgba(201,168,76,0.3);
-  position:relative;z-index:1;
-}
-.status-dot{
-  position:absolute;bottom:6px;right:6px;width:14px;height:14px;
-  background:#22c55e;border-radius:50%;border:2px solid var(--bg2);z-index:2;
-}
+.avatar{width:110px;height:110px;border-radius:50%;background:linear-gradient(145deg,#c9a84c,#8b5e1a);display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-size:2.4rem;font-weight:700;color:#fff;box-shadow:0 0 0 4px var(--bg2),0 0 0 6px rgba(201,168,76,0.3);position:relative;z-index:1;}
+.status-dot{position:absolute;bottom:6px;right:6px;width:14px;height:14px;background:#22c55e;border-radius:50%;border:2px solid var(--bg2);z-index:2;}
 .hero-name{font-family:var(--serif);font-size:1.6rem;font-weight:700;text-align:center;line-height:1.25;margin-bottom:6px}
 .hero-role{font-size:0.82rem;color:var(--gold);text-align:center;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px}
 .hero-inst{font-size:0.8rem;color:var(--text2);text-align:center;margin-bottom:28px}
 .divider{width:100%;height:1px;background:var(--border);margin:20px 0}
-.contact-item{
-  display:flex;align-items:center;gap:10px;width:100%;
-  font-size:0.82rem;color:var(--text2);padding:7px 0;
-}
+.contact-item{display:flex;align-items:center;gap:10px;width:100%;font-size:0.82rem;color:var(--text2);padding:7px 0;}
 .contact-item i{color:var(--gold);width:16px;text-align:center;font-size:0.9rem;flex-shrink:0}
 .contact-item a{color:var(--text2)}
 .contact-item a:hover{color:var(--gold)}
 .sidenav{width:100%;margin-top:auto;padding-top:24px}
-.sidenav a{
-  display:flex;align-items:center;gap:10px;
-  padding:11px 14px;border-radius:10px;
-  font-size:0.86rem;color:var(--text3);
-  transition:all .2s;margin-bottom:2px;
-}
+.sidenav a{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;font-size:0.86rem;color:var(--text3);transition:all .2s;margin-bottom:2px;}
 .sidenav a.active,.sidenav a:hover{background:rgba(201,168,76,0.1);color:var(--gold)}
 .sidenav a i{width:18px;text-align:center;font-size:0.85rem}
 .social-row{display:flex;gap:12px;margin-top:28px}
-.social-btn{
-  width:36px;height:36px;border-radius:8px;background:var(--card);
-  border:1px solid var(--border);display:flex;align-items:center;justify-content:center;
-  font-size:0.9rem;color:var(--text2);transition:all .2s;
-}
+.social-btn{width:36px;height:36px;border-radius:8px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.9rem;color:var(--text2);transition:all .2s;}
 .social-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.08)}
-.open-badge{
-  margin-top:16px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);
-  border-radius:999px;padding:6px 14px;font-size:0.74rem;color:#4ade80;letter-spacing:0.06em;
-}
-
-/* ─── MAIN CONTENT ─── */
+.open-badge{margin-top:16px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);border-radius:999px;padding:6px 14px;font-size:0.74rem;color:#4ade80;letter-spacing:0.06em;}
 .main{flex:1;padding:0}
-
-/* ─── TAB NAV ─── */
-.tab-nav{
-  position:sticky;top:0;z-index:50;
-  background:rgba(13,15,20,0.95);
-  backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--border);
-  display:flex;padding:0 40px;gap:2px;
-}
-.tab-btn{
-  padding:18px 22px;font-size:0.88rem;font-weight:500;
-  color:var(--text3);background:none;
-  border-bottom:2px solid transparent;
-  transition:all .2s;display:flex;align-items:center;gap:8px;
-  white-space:nowrap;
-}
+.tab-nav{position:sticky;top:0;z-index:50;background:rgba(13,15,20,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;padding:0 40px;gap:2px;}
+.tab-btn{padding:18px 22px;font-size:0.88rem;font-weight:500;color:var(--text3);background:none;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:8px;white-space:nowrap;}
 .tab-btn i{font-size:0.85rem}
 .tab-btn.active,.tab-btn:hover{color:var(--text)}
 .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
-
-/* ─── PANELS ─── */
 .panel{display:none;padding:48px 44px 80px;animation:fadeIn .35s ease}
 .panel.active{display:block}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-
-/* ─── SECTION HEADERS ─── */
-.sec-label{
-  font-family:var(--mono);font-size:0.7rem;letter-spacing:0.16em;
-  text-transform:uppercase;color:var(--gold);margin-bottom:8px;
-}
+.sec-label{font-family:var(--mono);font-size:0.7rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
 .sec-title{font-family:var(--serif);font-size:2rem;font-weight:700;margin-bottom:36px;line-height:1.2}
-
-/* ─── ABOUT PANEL ─── */
-.about-hero{
-  background:linear-gradient(135deg,var(--card) 0%,var(--card2) 100%);
-  border:1px solid var(--border);border-radius:var(--rad);
-  padding:40px;margin-bottom:32px;position:relative;overflow:hidden;
-}
-.about-hero::before{
-  content:'';position:absolute;top:-60px;right:-60px;
-  width:220px;height:220px;border-radius:50%;
-  background:radial-gradient(circle,rgba(201,168,76,0.12),transparent 70%);
-}
+.about-hero{background:linear-gradient(135deg,var(--card) 0%,var(--card2) 100%);border:1px solid var(--border);border-radius:var(--rad);padding:40px;margin-bottom:32px;position:relative;overflow:hidden;}
+.about-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(201,168,76,0.12),transparent 70%);}
 .about-lead{font-size:1.05rem;line-height:1.85;color:var(--text2);max-width:680px}
 .about-lead strong{color:var(--text);font-weight:600}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:36px 0}
-.kpi{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
-  padding:24px 20px;text-align:center;position:relative;overflow:hidden;
-  transition:border-color .2s;
-}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px 20px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s;}
 .kpi:hover{border-color:var(--border2)}
-.kpi::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-}
+.kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
 .kpi-val{font-family:var(--serif);font-size:2rem;font-weight:700;color:var(--gold);display:block;margin-bottom:4px}
 .kpi-lbl{font-size:0.78rem;color:var(--text3);line-height:1.4}
-
-/* ─── EDUCATION PANEL ─── */
-.edu-card{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
-  padding:28px 32px;margin-bottom:16px;display:grid;
-  grid-template-columns:1fr auto;gap:16px;align-items:start;
-  transition:border-color .2s,transform .2s;
-}
+.edu-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:28px 32px;margin-bottom:16px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;transition:border-color .2s,transform .2s;}
 .edu-card:hover{border-color:var(--border2);transform:translateX(4px)}
-.edu-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;
-  padding:4px 10px;border-radius:999px;margin-bottom:10px;font-weight:500;
-}
+.edu-badge{display:inline-flex;align-items:center;gap:6px;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:10px;font-weight:500;}
 .badge-gold{background:rgba(201,168,76,0.15);color:var(--gold);border:1px solid rgba(201,168,76,0.3)}
 .badge-blue{background:rgba(79,142,247,0.1);color:#7ab0fb;border:1px solid rgba(79,142,247,0.2)}
 .badge-teal{background:rgba(46,196,182,0.1);color:var(--teal);border:1px solid rgba(46,196,182,0.2)}
@@ -175,28 +89,15 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
 .score-box{text-align:right}
 .score-num{font-family:var(--serif);font-size:1.6rem;font-weight:700;color:var(--gold);display:block}
 .score-lbl{font-size:0.72rem;color:var(--text3)}
-.achv-banner{
-  background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.03));
-  border:1px solid rgba(201,168,76,0.2);border-radius:var(--rad);
-  padding:20px 24px;margin-top:24px;display:flex;gap:16px;align-items:flex-start;
-}
+.achv-banner{background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.2);border-radius:var(--rad);padding:20px 24px;margin-top:24px;display:flex;gap:16px;align-items:flex-start;}
 .achv-icon{color:var(--gold);font-size:1.2rem;margin-top:2px;flex-shrink:0}
 .achv-text{font-size:0.9rem;color:var(--text2);line-height:1.7}
 .achv-text strong{color:var(--text);font-weight:600}
-
-/* ─── EXPERIENCE PANEL ─── */
-.exp-header{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
-  padding:28px 32px;margin-bottom:24px;
-  display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;
-}
+.exp-header{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:28px 32px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:16px;}
 .exp-org{font-family:var(--serif);font-size:1.4rem;font-weight:700;margin-bottom:6px}
 .exp-role{font-size:0.9rem;color:var(--text2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ws-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-.ws-card{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
-  padding:24px;transition:all .25s;cursor:pointer;
-}
+.ws-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px;transition:all .25s;cursor:pointer;}
 .ws-card:hover{border-color:rgba(201,168,76,0.35);background:var(--card2)}
 .ws-card.expanded{border-color:rgba(201,168,76,0.4);background:var(--card2)}
 .ws-num{font-family:var(--mono);font-size:0.7rem;color:var(--gold);margin-bottom:10px;letter-spacing:0.1em}
@@ -210,39 +111,23 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
 .ws-ul li::before{content:'';position:absolute;left:0;top:16px;width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:0.6}
 .ws-toggle{display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--text3);margin-top:12px}
 .ws-card.expanded .ws-toggle{color:var(--gold)}
-
-/* ─── RESEARCH PANEL ─── */
-.research-card{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
-  padding:36px;margin-bottom:24px;
-}
+.research-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:36px;margin-bottom:24px;}
 .research-title-text{font-family:var(--serif);font-size:1.4rem;font-weight:700;margin-bottom:8px;line-height:1.35}
 .research-meta{font-size:0.82rem;color:var(--text3);margin-bottom:24px}
 .findings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
 .finding{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px}
 .finding-icon{font-size:1.1rem;color:var(--gold);margin-bottom:8px}
 .finding-text{font-size:0.86rem;color:var(--text2);line-height:1.6}
-
-/* ─── CERTIFICATIONS PANEL ─── */
 .cert-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.cert-card{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
-  padding:24px;display:flex;gap:18px;align-items:flex-start;transition:all .2s;
-}
+.cert-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px;display:flex;gap:18px;align-items:flex-start;transition:all .2s;}
 .cert-card:hover{border-color:var(--border2);transform:translateY(-2px)}
-.cert-icon{
-  width:44px;height:44px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:1.2rem;flex-shrink:0;
-}
+.cert-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
 .cert-icon.gold{background:rgba(201,168,76,0.15);color:var(--gold)}
 .cert-icon.blue{background:rgba(79,142,247,0.12);color:var(--blue)}
 .cert-icon.teal{background:rgba(46,196,182,0.12);color:var(--teal)}
 .cert-name{font-size:0.95rem;font-weight:600;margin-bottom:4px}
 .cert-issuer{font-size:0.8rem;color:var(--text3)}
 .cert-year{font-family:var(--mono);font-size:0.75rem;color:var(--gold);margin-top:8px}
-
-/* ─── SKILLS PANEL ─── */
 .skills-wrap{display:grid;grid-template-columns:1fr 1fr;gap:32px}
 .skill-section-title{font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:16px;font-family:var(--mono)}
 .skill-bar{margin-bottom:20px}
@@ -254,105 +139,28 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
 .tag{font-size:0.82rem;padding:7px 14px;border-radius:8px;border:1px solid var(--border);color:var(--text2);background:var(--card);transition:all .2s}
 .tag:hover{border-color:rgba(201,168,76,0.3);color:var(--gold);background:rgba(201,168,76,0.06)}
 .tag.hi{border-color:rgba(201,168,76,0.25);color:var(--gold);background:rgba(201,168,76,0.07)}
-.extracurr{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
-  padding:24px;margin-top:28px;
-}
+.extracurr{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px;margin-top:28px;}
 .extracurr-title{font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;font-family:var(--mono)}
 .extracurr-item{display:flex;align-items:flex-start;gap:14px;padding:10px 0;border-bottom:1px solid var(--border)}
 .extracurr-item:last-child{border-bottom:none}
 .extracurr-item i{color:var(--gold);margin-top:2px;flex-shrink:0;font-size:0.9rem}
 .extracurr-item span{font-size:0.88rem;color:var(--text2);line-height:1.55}
-
-/* ─── CONTACT PANEL ─── */
 .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:700px}
-.contact-card{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
-  padding:28px;display:flex;flex-direction:column;gap:10px;transition:all .2s;
-}
+.contact-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:28px;display:flex;flex-direction:column;gap:10px;transition:all .2s;}
 .contact-card:hover{border-color:var(--border2);transform:translateY(-2px)}
 .contact-card-icon{font-size:1.5rem;color:var(--gold)}
 .contact-card-label{font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);font-family:var(--mono)}
 .contact-card-val{font-size:0.96rem;font-weight:500;word-break:break-all}
 .contact-card-val a{color:var(--text);transition:color .2s}
 .contact-card-val a:hover{color:var(--gold)}
-.contact-note{
-  margin-top:32px;max-width:680px;
-  font-size:0.9rem;color:var(--text2);line-height:1.8;
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:28px;
-}
-
-
-.pdf-btn{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:10px 20px;border-radius:8px;font-size:0.84rem;font-weight:500;
-  text-decoration:none;transition:all .2s;margin-top:16px;
-  border:1px solid rgba(201,168,76,0.4);
-  color:var(--gold);background:rgba(201,168,76,0.08);
-}
+.contact-note{margin-top:32px;max-width:680px;font-size:0.9rem;color:var(--text2);line-height:1.8;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:28px;}
+.pdf-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:0.84rem;font-weight:500;text-decoration:none;transition:all .2s;margin-top:16px;border:1px solid rgba(201,168,76,0.4);color:var(--gold);background:rgba(201,168,76,0.08);}
 .pdf-btn:hover{background:rgba(201,168,76,0.18);border-color:var(--gold);transform:translateY(-1px)}
 .pdf-btn i{font-size:1rem}
 .pdf-btn.teal-btn{color:var(--teal);border-color:rgba(46,196,182,0.4);background:rgba(46,196,182,0.08)}
 .pdf-btn.teal-btn:hover{background:rgba(46,196,182,0.18);border-color:var(--teal)}
-
-
-/* ─── PROJECTS ─── */
-.proj-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-.proj-card{
-  background:var(--card);border:1px solid var(--border);border-radius:var(--rad);
-  overflow:hidden;transition:all .25s;display:flex;flex-direction:column;
-}
-.proj-card:hover{border-color:rgba(201,168,76,0.4);transform:translateY(-3px);box-shadow:0 12px 40px rgba(0,0,0,0.3)}
-.proj-preview{
-  height:180px;background:var(--bg3);
-  display:flex;align-items:center;justify-content:center;
-  border-bottom:1px solid var(--border);position:relative;overflow:hidden;
-}
-.proj-preview iframe{
-  width:160%;height:160%;transform:scale(0.625);transform-origin:top left;
-  pointer-events:none;border:none;
-}
-.proj-preview-overlay{
-  position:absolute;inset:0;background:transparent;
-  display:flex;align-items:flex-end;padding:12px;
-}
-.proj-tag{
-  font-family:var(--mono);font-size:0.64rem;letter-spacing:0.1em;
-  text-transform:uppercase;padding:4px 10px;border-radius:999px;
-  background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);color:var(--text2);
-  border:1px solid var(--border2);
-}
-.proj-body{padding:22px 24px;flex:1;display:flex;flex-direction:column}
-.proj-num{font-family:var(--mono);font-size:0.68rem;color:var(--gold);margin-bottom:8px;letter-spacing:0.1em}
-.proj-title{font-size:1rem;font-weight:600;margin-bottom:8px;line-height:1.4}
-.proj-desc{font-size:0.86rem;color:var(--text2);line-height:1.7;margin-bottom:16px;flex:1}
-.proj-tech{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
-.proj-tech span{
-  font-size:0.74rem;padding:4px 10px;border-radius:6px;
-  border:1px solid var(--border);color:var(--text3);background:var(--bg3);
-}
-.proj-links{display:flex;gap:10px;flex-wrap:wrap}
-.proj-link{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:9px 16px;border-radius:8px;font-size:0.82rem;font-weight:500;
-  text-decoration:none;transition:all .2s;
-}
-.proj-link.primary{background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.3)}
-.proj-link.primary:hover{background:rgba(201,168,76,0.22);border-color:var(--gold)}
-.proj-link.secondary{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
-.proj-link.secondary:hover{border-color:var(--border2);color:var(--text)}
-.proj-context{
-  background:linear-gradient(135deg,rgba(201,168,76,0.06),rgba(46,196,182,0.04));
-  border:1px solid rgba(201,168,76,0.15);border-radius:var(--rad);
-  padding:22px 26px;margin-bottom:28px;
-  display:flex;align-items:flex-start;gap:14px;
-}
-.proj-context i{color:var(--gold);font-size:1.1rem;margin-top:2px;flex-shrink:0}
-.proj-context p{font-size:0.9rem;color:var(--text2);line-height:1.75}
-.proj-context strong{color:var(--text)}
-@media(max-width:900px){.proj-grid{grid-template-columns:1fr}}
-
-/* ─── MOBILE ─── */
+.proj-empty{background:var(--card);border:1px dashed var(--border2);border-radius:var(--rad);padding:48px 32px;text-align:center;color:var(--text3);}
+.proj-empty i{font-size:1.6rem;color:var(--gold);margin-bottom:14px;display:block}
 @media(max-width:900px){
   .hero{grid-template-columns:1fr}
   .hero-left{position:relative;height:auto;flex-direction:row;flex-wrap:wrap;justify-content:center;padding:28px 20px}
@@ -371,14 +179,13 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
 <body>
 
 <div class="hero">
-  <!-- Sidebar -->
   <aside class="hero-left">
     <div class="avatar-wrap">
       <div class="avatar">AA</div>
       <div class="status-dot"></div>
     </div>
     <h1 class="hero-name">Abhishek<br>Ayyangar</h1>
-    <p class="hero-role">MBA Candidate · 2025–27</p>
+    <p class="hero-role">Business Analyst & Strategy</p>
     <p class="hero-inst">IIM Ranchi</p>
 
     <div class="divider"></div>
@@ -410,7 +217,6 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
     <div class="open-badge">● Open to Placements 2026</div>
   </aside>
 
-  <!-- Main -->
   <div class="main">
     <nav class="tab-nav">
       <button class="tab-btn active" onclick="showTab('about',this)" data-tab="about"><i class="fa fa-user"></i>Profile</button>
@@ -423,14 +229,13 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       <button class="tab-btn" onclick="showTab('contact',this)" data-tab="contact"><i class="fa fa-paper-plane"></i>Contact</button>
     </nav>
 
-    <!-- ABOUT -->
     <div id="tab-about" class="panel active">
       <p class="sec-label">Candidate Profile</p>
       <h2 class="sec-title">Business Analyst & Strategy Professional</h2>
 
       <div class="about-hero">
         <p class="about-lead">
-          MBA candidate at <strong>IIM Ranchi</strong> with a B.Com in Accounting &amp; Finance, and hands-on experience across <strong>market intelligence, working capital optimization, export operations</strong> and <strong>AI-assisted process automation</strong>. I bridge financial data and strategic decisions — sizing markets, modelling cash-flow impact, and building the dashboards that make analysis actionable.
+          B.Com graduate in Accounting &amp; Finance with hands-on experience across <strong>market intelligence, working capital optimization, export operations</strong> and <strong>AI-assisted process automation</strong>. I bridge financial data and strategic decisions — sizing markets, modelling cash-flow impact, and building the dashboards that make analysis actionable.
         </p>
       </div>
 
@@ -444,12 +249,12 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
           <div class="kpi-lbl">UG Final Year Project Score</div>
         </div>
         <div class="kpi">
-          <span class="kpi-val">2 Mo</span>
+          <span class="kpi-val">2.5 Mo</span>
           <div class="kpi-lbl">Strategic BD Internship — Pharma Sector</div>
         </div>
         <div class="kpi">
-          <span class="kpi-val">4</span>
-          <div class="kpi-lbl">2025 Certifications Earned</div>
+          <span class="kpi-val">5</span>
+          <div class="kpi-lbl">Certifications Earned</div>
         </div>
       </div>
 
@@ -475,29 +280,15 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       </div>
     </div>
 
-    <!-- EDUCATION -->
     <div id="tab-education" class="panel">
       <p class="sec-label">Academic Record</p>
       <h2 class="sec-title">Qualifications & Achievements</h2>
 
       <div class="edu-card">
         <div>
-          <span class="edu-badge badge-gold"><i class="fa fa-star"></i> Current</span>
-          <div class="edu-deg">Master of Business Administration (MBA)</div>
-          <div class="edu-inst">Indian Institute of Management (IIM), Ranchi</div>
-          <div class="edu-year" style="margin-top:8px">2025 – 2027</div>
-        </div>
-        <div class="score-box">
-          <span class="score-num">5.05</span>
-          <div class="score-lbl">CGPA / 10<br><span style="font-size:0.68rem;color:var(--teal)">In Progress</span></div>
-        </div>
-      </div>
-
-      <div class="edu-card">
-        <div>
           <span class="edu-badge badge-blue"><i class="fa fa-graduation-cap"></i> Completed</span>
           <div class="edu-deg">B.Com — Accounting &amp; Finance (Honours)</div>
-          <div class="edu-inst">SIES College of Arts, Science &amp; Commerce</div>
+          <div class="edu-inst">S.I.E.S. (Nerul) College of Arts, Science &amp; Commerce</div>
           <div class="edu-year" style="margin-top:8px">2024</div>
           <a class="pdf-btn" href="https://abhishekayyangar25m-bot.github.io/portfolio/FDI_FPI_Project.pdf" target="_blank" style="margin-top:12px;font-size:0.78rem;padding:7px 14px"><i class="fa fa-file-pdf"></i> View Project — FDI &amp; FPI Study</a>
         </div>
@@ -528,7 +319,7 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
           <div class="edu-year" style="margin-top:8px">2019</div>
         </div>
         <div class="score-box">
-          <span class="score-num">81%</span>
+          <span class="score-num">79.66%</span>
           <div class="score-lbl">Percentage</div>
         </div>
       </div>
@@ -536,12 +327,18 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       <div class="achv-banner">
         <i class="fa fa-trophy achv-icon"></i>
         <div class="achv-text">
-          <strong>Academic Highlights —</strong> Secured <strong>10/10 CGPA</strong> in Cost Accounting and Indirect Taxation. Achieved <strong>96%</strong> in the final-year B.Com project, demonstrating strong applied research and analytical capability.
+          <strong>Academic Highlights —</strong> Secured an <strong>Outstanding (O) grade, 10/10 CGPA</strong> in Business Mathematics, Cost Accounting and Indirect Tax across all 3 years of graduation. Achieved <strong>96%</strong> on the final-year undergraduate project on FDI and FPI analysis.
+        </div>
+      </div>
+
+      <div class="achv-banner" style="margin-top:16px">
+        <i class="fa fa-award achv-icon"></i>
+        <div class="achv-text">
+          <strong>Work Achievement —</strong> Received a <strong>Letter of Recommendation</strong> from Senior Management at Anton Global Pharmaceuticals recognizing contributions during the internship.
         </div>
       </div>
     </div>
 
-    <!-- EXPERIENCE -->
     <div id="tab-experience" class="panel">
       <p class="sec-label">Professional Experience</p>
       <h2 class="sec-title">Anton Global Pharmaceuticals</h2>
@@ -551,7 +348,7 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
           <div class="exp-org">Anton Global Pharmaceuticals Pvt. Ltd.</div>
           <div class="exp-role">
             Strategic Business Development &amp; Market Intelligence Intern
-            <span class="edu-badge badge-gold" style="margin:0">2 Months · 2024</span>
+            <span class="edu-badge badge-gold" style="margin:0">2.5 Months · Apr–Jun 2026</span>
             <span class="edu-badge badge-teal" style="margin:0">Full-time · On-site</span>
           </div>
         </div>
@@ -564,13 +361,12 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       <div class="ws-grid">
         <div class="ws-card" onclick="toggleWS(this)">
           <div class="ws-num">WS — 01</div>
-          <div class="ws-title">Market Intelligence</div>
-          <div class="ws-preview">Brazil API-FDF market sizing, STP analysis, ANVISA compliance</div>
+          <div class="ws-title">Strategic Market Analysis</div>
+          <div class="ws-preview">STP-based landscape analysis, 50+ country outreach campaign</div>
           <div class="ws-body">
             <ul class="ws-ul">
-              <li>Researched Brazil's pharmaceutical sector using IQVIA and ANVISA publications to size the API-FDF addressable market and map high-potential therapeutic segments (anti-infectives, cardiovascular).</li>
-              <li>Applied STP frameworks to assess competitive dynamics, profiling key Indian pharma exporters in Latin America and benchmarking against Anton's portfolio.</li>
-              <li>Delivered a structured market-entry landscape report recommending a partnership-led model; mapped ANVISA requirements and potential distribution partners in Brazil.</li>
+              <li>Conducted market landscape analysis utilizing STP frameworks, profiling 12 key exporters and benchmarking competitive positioning and industry research to size the total addressable market.</li>
+              <li>Drove a global market expansion campaign across 50+ countries, sending 1,000+ structured outreach emails to identify qualified distributors, validate market entry and growth.</li>
             </ul>
           </div>
           <div class="ws-toggle"><i class="fa fa-chevron-down"></i><span>Click to expand</span></div>
@@ -578,13 +374,12 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
 
         <div class="ws-card" onclick="toggleWS(this)">
           <div class="ws-num">WS — 02</div>
-          <div class="ws-title">Financial Systems & Working Capital Optimisation</div>
-          <div class="ws-preview">DSO/DPO/DIO diagnostics, Excel scenario modelling, automation blueprints</div>
+          <div class="ws-title">Capital Efficiency</div>
+          <div class="ws-preview">DSO/DPO/DIO diagnostics, trade-financing mechanisms</div>
           <div class="ws-body">
             <ul class="ws-ul">
-              <li>Diagnosed working capital inefficiencies by computing DSO, DPO and DIO against industry benchmarks, identifying root causes of excessive external finance dependency.</li>
-              <li>Modelled financial impact of proposed interventions on the Cash Conversion Cycle using Excel scenario analysis; designed automation blueprints for financial reporting and reconciliation.</li>
-              <li>Elevated management awareness of the link between operational efficiency and financial health, positioning finance as a strategic enabler for self-funded international expansion.</li>
+              <li>Discovered inefficiencies in working capital (DSO, DPO, DIO), studying underlying causes of financial reliance and how a standard optimization strategy enables expansion.</li>
+              <li>Gained knowledge of trade-financing mechanisms within Indian banking systems, such as pre- and post-shipment financing, to optimize international expansion strategy and operations.</li>
             </ul>
           </div>
           <div class="ws-toggle"><i class="fa fa-chevron-down"></i><span>Click to expand</span></div>
@@ -592,13 +387,12 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
 
         <div class="ws-card" onclick="toggleWS(this)">
           <div class="ws-num">WS — 03</div>
-          <div class="ws-title">Export Operations & FinTech Automation</div>
-          <div class="ws-preview">International AR management, AI-automated invoice pipeline using Claude AI</div>
+          <div class="ws-title">Receivables & Funds Management</div>
+          <div class="ws-preview">International AR ageing framework, 25+ order disbursal tracking</div>
           <div class="ws-body">
             <ul class="ws-ul">
-              <li>Managed international receivables across Dominican Republic, Brazil and Saudi Arabia using an AR-ageing framework to prioritise collection outreach from high-value buyers.</li>
-              <li>Built a structured post-shipment disbursal dataset from banking and export registers for accurate financial tracking.</li>
-              <li>Co-designed and deployed an AI-assisted automated invoice workflow (Claude AI) with the company's CA, converting a fully manual high-frequency process into a streamlined, error-resistant pipeline.</li>
+              <li>Managed international receivables across countries including Brazil, applying a trade receivable ageing framework to categorize outstanding payments and prioritize collection outreach.</li>
+              <li>Built a structured post-shipment disbursal dataset from export registers for 25+ orders to ensure proper financial support for smooth operations and delivery.</li>
             </ul>
           </div>
           <div class="ws-toggle"><i class="fa fa-chevron-down"></i><span>Click to expand</span></div>
@@ -606,12 +400,12 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
 
         <div class="ws-card" onclick="toggleWS(this)">
           <div class="ws-num">WS — 04</div>
-          <div class="ws-title">Procurement, MIS Redesign & International Negotiation</div>
-          <div class="ws-preview">Finance portal redesign, API supplier evaluation matrix, TCO analysis</div>
+          <div class="ws-title">Operations & Systems</div>
+          <div class="ws-preview">Finance/CRM/supply chain portal redesign, supplier consolidation</div>
           <div class="ws-body">
             <ul class="ws-ul">
-              <li>Redesigned the company's internal finance, logistics and supply-chain portal; identified reporting gaps and implemented improvements to dashboards for audit readiness.</li>
-              <li>Built an API Supplier Evaluation Matrix scoring vendors across price competitiveness, WHO-GMP/USFDA certification, delivery standards and TCO analysis to shortlist suppliers for 3 APIs.</li>
+              <li>Redesigned the company's internal finance, CRM and supply chain portal while integrating processes; improved financial dashboards, enhancing data accessibility and reporting accuracy.</li>
+              <li>Streamlined the API sourcing process by contacting suppliers and consolidating quotations for 3 export market suppliers, reducing sourcing complexity and improving vendor selection.</li>
             </ul>
           </div>
           <div class="ws-toggle"><i class="fa fa-chevron-down"></i><span>Click to expand</span></div>
@@ -619,7 +413,6 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       </div>
     </div>
 
-    <!-- RESEARCH -->
     <div id="tab-research" class="panel">
       <p class="sec-label">Academic Research</p>
       <h2 class="sec-title">Research Paper — 2023</h2>
@@ -638,25 +431,55 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
         <div class="findings-grid">
           <div class="finding">
             <div class="finding-icon"><i class="fa fa-users"></i></div>
-            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Survey Coverage</strong>50 respondents surveyed on digital payment adoption patterns across demographics.</div>
+            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Survey Coverage</strong>Surveyed 50 respondents across 3+ parameters, describing 8 advantages versus 4 critical barriers to adoption.</div>
           </div>
           <div class="finding">
             <div class="finding-icon"><i class="fa fa-mobile-alt"></i></div>
-            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Payment Systems</strong>Analysed adoption of UPI, e-wallets and online banking across the respondent pool.</div>
+            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Payment Systems</strong>Examined 5 payment avenues and assessed public perception on security versus convenience trade-offs.</div>
           </div>
           <div class="finding">
             <div class="finding-icon"><i class="fa fa-landmark"></i></div>
-            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Policy Impact</strong>Assessed the role of PMJDY and demonetisation in accelerating cashless adoption.</div>
+            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Policy Impact</strong>Analysed payment behavior patterns and government initiative impact to deliver strategic recommendations on cashless economy readiness.</div>
           </div>
           <div class="finding">
             <div class="finding-icon"><i class="fa fa-shield-alt"></i></div>
-            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Key Barriers</strong>Identified cybersecurity risk and economic disparity as primary obstacles to India's cashless transition.</div>
+            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Key Barriers</strong>Elucidated infrastructure gaps and policy interventions required for a full digital transition.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="research-card">
+        <div class="edu-badge badge-blue" style="margin-bottom:16px"><i class="fa fa-chart-line"></i> Academic Project · 2024</div>
+        <div class="research-title-text">An Analytical Study on FDI and FPI in India</div>
+        <div class="research-meta">Quantitative Research · Survey-based · B.Com Final Year Project (96%)</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <a class="pdf-btn" href="https://abhishekayyangar25m-bot.github.io/portfolio/FDI_FPI_Project.pdf" target="_blank"><i class="fa fa-file-pdf"></i> Download Project Report (PDF)</a>
+        </div>
+        <p style="font-size:0.92rem;color:var(--text2);line-height:1.8;margin-bottom:20px">
+          An analytical study examining India's Foreign Direct and Portfolio Investment inflows over a decade, assessing investor sentiment and the effectiveness of government reforms in attracting capital to emerging markets.
+        </p>
+        <div class="divider" style="margin:20px 0"></div>
+        <div class="findings-grid">
+          <div class="finding">
+            <div class="finding-icon"><i class="fa fa-users"></i></div>
+            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Survey Coverage</strong>Surveyed 80+ respondents on investor sentiment and government reform effectiveness in attracting capital inflows.</div>
+          </div>
+          <div class="finding">
+            <div class="finding-icon"><i class="fa fa-chart-pie"></i></div>
+            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Sectoral Analysis</strong>Examined sectoral ROI patterns and financial reform impact, studying FDI policy across China–India pharma competition.</div>
+          </div>
+          <div class="finding">
+            <div class="finding-icon"><i class="fa fa-globe"></i></div>
+            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Market Coverage</strong>Identified the top 10 FDI contributor countries and leading Indian states over a 10-year analysis window.</div>
+          </div>
+          <div class="finding">
+            <div class="finding-icon"><i class="fa fa-book"></i></div>
+            <div class="finding-text"><strong style="color:var(--text);display:block;margin-bottom:4px">Methodology</strong>Delivered policy recommendations using quantitative forecasting, a formal research hypothesis and a 5+ paper literature review.</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- CERTIFICATIONS -->
     <div id="tab-certifications" class="panel">
       <p class="sec-label">Professional Development</p>
       <h2 class="sec-title">Certifications</h2>
@@ -665,8 +488,35 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
         <div class="cert-card">
           <div class="cert-icon gold"><i class="fa fa-brain"></i></div>
           <div>
-            <div class="cert-name">Generative AI for Business Managers</div>
-            <div class="cert-issuer">LinkedIn Learning</div>
+            <div class="cert-name">Generative AI Applications: Transform Your Work</div>
+            <div class="cert-issuer">Online Certification</div>
+            <div class="cert-year">2026</div>
+          </div>
+        </div>
+
+        <div class="cert-card">
+          <div class="cert-icon teal"><i class="fa fa-file-excel"></i></div>
+          <div>
+            <div class="cert-name">Excel for Finance &amp; FP&amp;A: Analysis, Forecasting and Modelling</div>
+            <div class="cert-issuer">Online Certification</div>
+            <div class="cert-year">2026</div>
+          </div>
+        </div>
+
+        <div class="cert-card">
+          <div class="cert-icon teal"><i class="fa fa-chart-pie"></i></div>
+          <div>
+            <div class="cert-name">Power BI — Microsoft Power BI from Basics to Advanced</div>
+            <div class="cert-issuer">Online Certification</div>
+            <div class="cert-year">2026</div>
+          </div>
+        </div>
+
+        <div class="cert-card">
+          <div class="cert-icon blue"><i class="fa fa-chart-line"></i></div>
+          <div>
+            <div class="cert-name">Google Analytics Certification</div>
+            <div class="cert-issuer">Coursera Project Network</div>
             <div class="cert-year">2025</div>
           </div>
         </div>
@@ -674,33 +524,14 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
         <div class="cert-card">
           <div class="cert-icon blue"><i class="fa fa-building-columns"></i></div>
           <div>
-            <div class="cert-name">Investment Banking: M&A Simulation</div>
+            <div class="cert-name">Investment Banking Job Simulation: M&amp;A Targets, Auction, Financial Analysis &amp; Recommendations</div>
             <div class="cert-issuer">JP Morgan · Forage</div>
-            <div class="cert-year">2025</div>
-          </div>
-        </div>
-
-        <div class="cert-card">
-          <div class="cert-icon teal"><i class="fa fa-chart-pie"></i></div>
-          <div>
-            <div class="cert-name">Power BI for Beginners</div>
-            <div class="cert-issuer">Coursera</div>
-            <div class="cert-year">2025</div>
-          </div>
-        </div>
-
-        <div class="cert-card">
-          <div class="cert-icon gold"><i class="fa fa-diagram-project"></i></div>
-          <div>
-            <div class="cert-name">Project Management with ClickUp</div>
-            <div class="cert-issuer">Online Certification</div>
             <div class="cert-year">2025</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- SKILLS -->
     <div id="tab-skills" class="panel">
       <p class="sec-label">Competencies</p>
       <h2 class="sec-title">Skills & Interests</h2>
@@ -709,19 +540,19 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
         <div>
           <div class="skill-section-title">Technical Skills</div>
           <div class="skill-bar">
-            <div class="skill-bar-label"><span>Microsoft Excel (Advanced)</span><span>90%</span></div>
+            <div class="skill-bar-label"><span>Microsoft Office</span><span>90%</span></div>
             <div class="bar-track"><div class="bar-fill" data-w="90"></div></div>
           </div>
           <div class="skill-bar">
-            <div class="skill-bar-label"><span>AI Process Automation</span><span>85%</span></div>
-            <div class="bar-track"><div class="bar-fill" data-w="85"></div></div>
+            <div class="skill-bar-label"><span>Generative AI</span><span>88%</span></div>
+            <div class="bar-track"><div class="bar-fill" data-w="88"></div></div>
           </div>
           <div class="skill-bar">
             <div class="skill-bar-label"><span>Power BI / Data Dashboards</span><span>75%</span></div>
             <div class="bar-track"><div class="bar-fill" data-w="75"></div></div>
           </div>
           <div class="skill-bar">
-            <div class="skill-bar-label"><span>Financial Modelling</span><span>80%</span></div>
+            <div class="skill-bar-label"><span>Canva</span><span>80%</span></div>
             <div class="bar-track"><div class="bar-fill" data-w="80"></div></div>
           </div>
           <div class="skill-bar">
@@ -734,12 +565,9 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
           <div class="skill-section-title">Soft Skills</div>
           <div class="tag-cloud" style="margin-bottom:24px">
             <span class="tag hi">Leadership</span>
-            <span class="tag hi">Problem Solving</span>
             <span class="tag hi">Communication</span>
-            <span class="tag">Negotiation</span>
-            <span class="tag">Strategic Thinking</span>
-            <span class="tag">Stakeholder Management</span>
-            <span class="tag">Cross-functional Collaboration</span>
+            <span class="tag hi">Teamwork</span>
+            <span class="tag">Deadline Management</span>
           </div>
 
           <div class="skill-section-title">Interests</div>
@@ -750,6 +578,10 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
             <span class="tag"><i class="fa fa-utensils" style="margin-right:6px;font-size:0.8rem"></i>Cooking</span>
             <span class="tag"><i class="fa fa-blog" style="margin-right:6px;font-size:0.8rem"></i>Blogging</span>
             <span class="tag"><i class="fa fa-chart-line" style="margin-right:6px;font-size:0.8rem"></i>Finance</span>
+            <span class="tag"><i class="fa fa-landmark" style="margin-right:6px;font-size:0.8rem"></i>Politics</span>
+            <span class="tag"><i class="fa fa-flask" style="margin-right:6px;font-size:0.8rem"></i>Research</span>
+            <span class="tag"><i class="fa fa-chalkboard-teacher" style="margin-right:6px;font-size:0.8rem"></i>Teaching</span>
+            <span class="tag"><i class="fa fa-chess" style="margin-right:6px;font-size:0.8rem"></i>Strategies</span>
           </div>
         </div>
       </div>
@@ -757,112 +589,30 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
       <div class="extracurr">
         <div class="extracurr-title">Extra-Curricular Achievements</div>
         <div class="extracurr-item">
-          <i class="fa fa-microphone"></i>
-          <span><strong style="color:var(--text)">Group Discussion</strong> — S.I.E.S. DLLE (Department of Lifelong Learning &amp; Extension), 2022</span>
+          <i class="fa fa-landmark"></i>
+          <span><strong style="color:var(--text)">Intern Nation National Governance Tour</strong> — Institutional visits to Rashtrapati Bhavan, Vidhan Sabha and Kartavya Bhavan, with interactions with prominent government officials and policy makers, 2026</span>
+        </div>
+        <div class="extracurr-item">
+          <i class="fa fa-laptop-code"></i>
+          <span><strong style="color:var(--text)">Vocational Education Program</strong> — D.A.V. Public School, gaining hands-on experience in I.T. skills, 2018</span>
         </div>
         <div class="extracurr-item">
           <i class="fa fa-film"></i>
-          <span><strong style="color:var(--text)">SOCH</strong> — Short film project with over 1,500 viewers, 2017</span>
+          <span><strong style="color:var(--text)">SOCH</strong> — Acted in a short film on YouTube with 1,500+ viewers under the Breakthrough Films channel, 2017</span>
         </div>
       </div>
     </div>
 
-    <!-- PROJECTS -->
     <div id="tab-projects" class="panel">
       <p class="sec-label">Live Prototypes</p>
-      <h2 class="sec-title">Internship Projects</h2>
+      <h2 class="sec-title">Projects</h2>
 
-      <div class="proj-context">
-        <i class="fa fa-flask"></i>
-        <p>
-          These are <strong>functional front-end prototypes</strong> built during my internship at
-          <strong>Anton Global Pharmaceuticals Pvt. Ltd.</strong> Both tools were designed to solve real
-          operational problems — automating manual workflows and redesigning the company's internal
-          finance and supply chain systems. Built using <strong>HTML, CSS &amp; JavaScript</strong>,
-          co-developed with AI assistance (Claude AI).
-        </p>
-      </div>
-
-      <div class="proj-grid">
-
-        <!-- Project 1: Supply Chain Portal -->
-        <div class="proj-card">
-          <div class="proj-preview">
-            <iframe src="https://abhishekayyangar25m-bot.github.io/portfolio/supply-chain-portal.html" title="Supply Chain Portal Preview" loading="lazy" tabindex="-1" aria-hidden="true"></iframe>
-            <div class="proj-preview-overlay">
-              <span class="proj-tag">Supply Chain · Pharma</span>
-            </div>
-          </div>
-          <div class="proj-body">
-            <div class="proj-num">PROJECT — 01</div>
-            <div class="proj-title">Anton Pharma — Supply Chain Management Portal</div>
-            <div class="proj-desc">
-              A full-featured internal supply chain portal redesigned from scratch. Features include order tracking, 
-              party master &amp; product master management, activity logs, export CSV, 
-              value calculation, and a real-time supply chain overview dashboard with order-status analytics.
-            </div>
-            <div class="proj-tech">
-              <span>HTML / CSS</span><span>JavaScript</span><span>Supply Chain</span>
-              <span>MIS Redesign</span><span>Dashboard</span><span>Claude AI</span>
-            </div>
-            <div class="proj-links">
-              <a class="proj-link primary" href="https://abhishekayyangar25m-bot.github.io/portfolio/supply-chain-portal.html" target="_blank" rel="noopener">
-                <i class="fa fa-external-link-alt"></i> Open Live Demo
-              </a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Project 2: Finance Portal -->
-        <div class="proj-card">
-          <div class="proj-preview">
-            <iframe src="https://abhishekayyangar25m-bot.github.io/portfolio/finance-portal.html" title="Finance Portal Preview" loading="lazy" tabindex="-1" aria-hidden="true"></iframe>
-            <div class="proj-preview-overlay">
-              <span class="proj-tag">Finance · Export Operations</span>
-            </div>
-          </div>
-          <div class="proj-body">
-            <div class="proj-num">PROJECT — 02</div>
-            <div class="proj-title">Anton Global — Commercial Invoice &amp; Finance Portal</div>
-            <div class="proj-desc">
-              An integrated finance and export operations portal featuring a commercial invoice generator, 
-              SCOMET &amp; non-hazardous goods declarations, packing list automation, client master database, 
-              financial overview, and document management — replacing a fully manual invoicing workflow.
-            </div>
-            <div class="proj-tech">
-              <span>HTML / CSS</span><span>JavaScript</span><span>FinTech</span>
-              <span>Invoice Automation</span><span>Export Ops</span><span>Claude AI</span>
-            </div>
-            <div class="proj-links">
-              <a class="proj-link primary" href="https://abhishekayyangar25m-bot.github.io/portfolio/finance-portal.html" target="_blank" rel="noopener">
-                <i class="fa fa-external-link-alt"></i> Open Live Demo
-              </a>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <div style="margin-top:24px;background:var(--card);border:1px solid var(--border);border-radius:var(--rad);padding:24px">
-        <p style="font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:14px;font-family:var(--mono)">Impact at Anton Global</p>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
-          <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
-            <div style="font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--gold)">100%</div>
-            <div style="font-size:0.78rem;color:var(--text3);margin-top:4px">Manual Invoice Process Automated</div>
-          </div>
-          <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
-            <div style="font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--teal)">3</div>
-            <div style="font-size:0.78rem;color:var(--text3);margin-top:4px">International Markets Managed (DR, Brazil, KSA)</div>
-          </div>
-          <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)">
-            <div style="font-family:var(--serif);font-size:1.5rem;font-weight:700;color:var(--blue)">2</div>
-            <div style="font-size:0.78rem;color:var(--text3);margin-top:4px">Full Portals Designed &amp; Deployed</div>
-          </div>
-        </div>
+      <div class="proj-empty">
+        <i class="fa fa-code"></i>
+        No projects to show yet — check back soon.
       </div>
     </div>
 
-    <!-- CONTACT -->
     <div id="tab-contact" class="panel">
       <p class="sec-label">Get in Touch</p>
       <h2 class="sec-title">Contact</h2>
@@ -892,12 +642,12 @@ button{cursor:pointer;border:none;outline:none;font-family:var(--sans)}
 
       <div class="contact-note">
         <strong style="color:var(--gold);display:block;margin-bottom:10px">Open to Opportunities</strong>
-        Currently pursuing an MBA at IIM Ranchi (Class of 2027). Available for business analyst, strategy, and market intelligence roles for the 2026 final placement cycle. Feel free to reach out via email or LinkedIn.
+        Available for business analyst, strategy, and market intelligence roles. Feel free to reach out via email or LinkedIn.
       </div>
     </div>
 
-  </div><!-- /main -->
-</div><!-- /hero -->
+  </div>
+</div>
 
 <script>
 function showTab(id, el) {
@@ -907,11 +657,9 @@ function showTab(id, el) {
   document.querySelectorAll('[data-tab="' + id + '"], .sidenav a').forEach(b => {
     if (b.getAttribute('data-tab') === id) b.classList.add('active');
   });
-  // Match sidenav
   document.querySelectorAll('.sidenav a').forEach(a => {
     if (a.getAttribute('onclick') && a.getAttribute('onclick').includes("'" + id + "'")) a.classList.add('active');
   });
-  // Animate skill bars on skills tab
   if (id === 'skills') animateBars();
   if (el) { el.classList.add('active'); }
   return false;
@@ -930,7 +678,6 @@ function animateBars() {
   });
 }
 
-// Run bars if skills tab is initially active
 if (document.getElementById('tab-skills') && document.getElementById('tab-skills').classList.contains('active')) animateBars();
 </script>
 </body>
